@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Cool Player는 FLAC 음원을 ALAC로 변환하고, 앨범아트와 메타정보, LRC 실시간 가사를 함께 정리하는 macOS 앱입니다.">
+  <title>Cool Player - FLAC to ALAC for macOS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #101724;
+      --muted: #667085;
+      --line: #e6edf5;
+      --paper: #ffffff;
+      --soft: #f5f9fd;
+      --blue: #2f8fe8;
+      --blue-2: #77d2ff;
+      --navy: #0b141d;
+      --navy-2: #102334;
+      --shadow: 0 28px 80px rgba(16, 24, 40, .13);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Noto Sans KR", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      letter-spacing: 0;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      overflow-x: hidden;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .wrap {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+    }
+
+    .site-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 18% 14%, rgba(119, 210, 255, .18), transparent 24%),
+        radial-gradient(circle at 82% 18%, rgba(47, 143, 232, .14), transparent 26%),
+        linear-gradient(180deg, #fff 0%, #f7fbff 42%, #fff 100%);
+    }
+
+    .glow {
+      position: fixed;
+      width: 380px;
+      height: 380px;
+      border-radius: 50%;
+      left: var(--mx, 50%);
+      top: var(--my, 10%);
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(47, 143, 232, .12), transparent 62%);
+      pointer-events: none;
+      z-index: -2;
+      transition: opacity .25s ease;
+    }
+
+    .nav {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 21px;
+      font-weight: 800;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, #80d8ff, #248bd8);
+      box-shadow: 0 16px 32px rgba(47, 143, 232, .22);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      color: #475467;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .nav-links a { transition: color .2s ease, transform .2s ease; }
+    .nav-links a:hover { color: var(--blue); transform: translateY(-1px); }
+
+    .nav-pill {
+      padding: 11px 18px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--ink);
+      box-shadow: 0 12px 26px rgba(16, 24, 40, .14);
+    }
+
+    .nav-download {
+      padding: 11px 18px;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: 0 12px 26px rgba(47, 143, 232, .18);
+    }
+
+    .hero {
+      position: relative;
+      padding: 58px 0 92px;
+      overflow: hidden;
+    }
+
+    .hero-copy {
+      max-width: 850px;
+      margin: 0 auto 44px;
+      text-align: center;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: #1d73b8;
+      background: #eaf6ff;
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 22px;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 0 0 rgba(47, 143, 232, .38);
+      animation: pulse 1.9s infinite;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(42px, 5.2vw, 72px);
+      line-height: 1.13;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .blue { color: var(--blue); }
+    .mobile-only { display: none; }
+
+    .lead {
+      max-width: 710px;
+      margin: 24px auto 0;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.82;
+      font-weight: 500;
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 32px;
+    }
+
+    .btn {
+      height: 52px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 0 22px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      font-size: 15px;
+      font-weight: 800;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+    .btn.primary { color: #fff; background: var(--blue); box-shadow: 0 16px 34px rgba(47, 143, 232, .26); }
+    .btn.secondary { color: #344054; background: #fff; border-color: var(--line); box-shadow: 0 12px 28px rgba(16, 24, 40, .06); }
+
+    .hero-stage {
+      position: relative;
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 16px;
+      border-radius: 26px;
+      background: linear-gradient(135deg, rgba(47, 143, 232, .15), rgba(119, 210, 255, .19));
+      box-shadow: var(--shadow);
+      transform-style: preserve-3d;
+      transition: transform .25s ease;
+    }
+
+    .hero-stage:before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      z-index: -1;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(47,143,232,.42), rgba(255,255,255,.4), rgba(119,210,255,.36));
+      opacity: .72;
+      filter: blur(14px);
+    }
+
+    .hero-screen {
+      width: 100%;
+      border-radius: 17px;
+      border: 1px solid rgba(16, 24, 40, .14);
+      box-shadow: 0 22px 58px rgba(16, 24, 40, .24);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .summary-card {
+      min-height: 104px;
+      padding: 18px 20px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .92);
+      border: 1px solid rgba(255, 255, 255, .78);
+      box-shadow: 0 12px 30px rgba(16, 24, 40, .07);
+    }
+
+    .summary-card strong { display: block; margin-bottom: 7px; font-size: 16px; }
+    .summary-card span { color: var(--muted); line-height: 1.66; font-size: 14px; }
+
+    .actual-shot {
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    .actual-shot img {
+      width: 100%;
+      display: block;
+    }
+
+    .actual-shot figcaption {
+      padding: 16px 18px;
+      color: rgba(255, 255, 255, .72);
+      background: rgba(8, 14, 20, .96);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .flow-card span {
+      display: block;
+      padding: 14px 16px;
+      border-radius: 14px;
+      color: rgba(255, 255, 255, .78);
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .flow-card {
+      display: grid;
+      gap: 12px;
+      padding: 28px;
+      border-radius: 22px;
+      color: #fff;
+      background:
+        radial-gradient(circle at 88% 8%, rgba(47, 143, 232, .18), transparent 28%),
+        linear-gradient(135deg, #151b22, #0f151c);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .flow-card strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 22px;
+    }
+
+    .screen-stack {
+      display: grid;
+      gap: 42px;
+    }
+
+    .screen-detail {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      border-radius: 30px;
+      border: 1px solid rgba(47, 143, 232, .14);
+      background:
+        radial-gradient(circle at 88% 10%, rgba(47, 143, 232, .14), transparent 28%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+      box-shadow: 0 26px 70px rgba(16, 24, 40, .1);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .screen-detail:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 34px 84px rgba(16, 24, 40, .14);
+    }
+
+    .screen-copy {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      padding: 22px 24px 24px;
+      align-items: end;
+    }
+
+    .screen-copy h3 {
+      margin: 8px 0 10px;
+      font-size: 30px;
+    }
+
+    .screen-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.75;
+      font-size: 16px;
+      max-width: 720px;
+    }
+
+    .screen-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .screen-kicker span {
+      width: 28px;
+      height: 28px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--blue);
+      box-shadow: 0 10px 20px rgba(47, 143, 232, .22);
+    }
+
+    .screen-tags {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: 360px;
+    }
+
+    .screen-tags span {
+      padding: 9px 12px;
+      border-radius: 999px;
+      color: #2f3b4a;
+      background: rgba(255, 255, 255, .78);
+      border: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .screen-frame {
+      overflow: hidden;
+      border-radius: 22px;
+      background: #111820;
+      border: 1px solid rgba(16, 24, 40, .12);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 18px 44px rgba(16, 24, 40, .12);
+    }
+
+    .screen-frame-top {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .screen-frame-top i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.28);
+    }
+
+    .screen-frame img {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16 / 9;
+      object-fit: contain;
+      object-position: top left;
+      background: #111820;
+    }
+
+    section { padding: 88px 0; }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: .85fr 1fr;
+      gap: 70px;
+      align-items: end;
+      margin-bottom: 38px;
+    }
+
+    .label {
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 13px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(30px, 3.4vw, 42px);
+      line-height: 1.25;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.82;
+      font-weight: 500;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .feature {
+      position: relative;
+      min-height: 232px;
+      padding: 26px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 46px rgba(16, 24, 40, .05);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+
+    .feature:after {
+      content: "";
+      position: absolute;
+      inset: auto -30px -60px auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(47, 143, 232, .08);
+      transition: transform .28s ease;
+    }
+
+    .feature:hover {
+      transform: translateY(-6px);
+      border-color: rgba(47, 143, 232, .28);
+      box-shadow: 0 24px 60px rgba(16, 24, 40, .09);
+    }
+
+    .feature:hover:after { transform: scale(1.28); }
+    .num { color: var(--blue); font-size: 14px; font-weight: 800; margin-bottom: 24px; }
+    .feature h3 { margin: 0 0 11px; font-size: 19px; }
+    .feature p { margin: 0; color: var(--muted); line-height: 1.72; font-size: 15px; }
+
+    .dark {
+      position: relative;
+      color: #fff;
+      background:
+        radial-gradient(circle at 78% 22%, rgba(47, 143, 232, .28), transparent 34%),
+        linear-gradient(135deg, var(--navy), var(--navy-2));
+      overflow: hidden;
+    }
+
+    .dark:after {
+      content: "";
+      position: absolute;
+      left: -120px;
+      bottom: -160px;
+      width: 430px;
+      height: 430px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(119, 210, 255, .16), transparent 66%);
+    }
+
+    .dark .wrap { position: relative; z-index: 1; }
+    .dark .section-head p { color: rgba(255, 255, 255, .68); }
+
+    .workflow-layout {
+      display: grid;
+      grid-template-columns: .82fr 1.18fr;
+      gap: 34px;
+      align-items: center;
+    }
+
+    .steps { display: grid; gap: 14px; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 16px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .1);
+      backdrop-filter: blur(14px);
+      transition: transform .25s ease, background .25s ease;
+    }
+
+    .step:hover { transform: translateX(6px); background: rgba(255, 255, 255, .115); }
+
+    .badge {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(47, 143, 232, .18);
+      color: #8bd4ff;
+      font-weight: 800;
+    }
+
+    .step strong { display: block; margin-bottom: 6px; }
+    .step span { color: rgba(255, 255, 255, .68); font-size: 15px; line-height: 1.65; }
+
+    .dark-shot {
+      border-radius: 22px;
+      overflow: hidden;
+      background: #111820;
+      border: 1px solid rgba(255, 255, 255, .12);
+      box-shadow: 0 28px 70px rgba(0, 0, 0, .32);
+    }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .screen-card {
+      overflow: hidden;
+      border-radius: 22px;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 48px rgba(16, 24, 40, .06);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .screen-card:hover { transform: translateY(-6px); box-shadow: 0 26px 66px rgba(16, 24, 40, .1); }
+
+    .screen-card img {
+      width: 100%;
+      height: 315px;
+      object-fit: cover;
+      object-position: top left;
+      background: #111820;
+    }
+
+    .screen-card div { padding: 24px; }
+    .screen-card h3 { margin: 0 0 9px; font-size: 21px; }
+    .screen-card p { margin: 0; color: var(--muted); line-height: 1.72; }
+
+    .specs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .spec {
+      padding: 28px;
+      border-radius: 20px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+    }
+
+    .spec small {
+      display: block;
+      color: var(--blue);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .spec strong {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    .spec span { color: var(--muted); line-height: 1.7; }
+
+    .cta {
+      padding: 84px 0;
+      text-align: center;
+      background: linear-gradient(135deg, #edf8ff, #fff);
+    }
+
+    .cta h2 { max-width: 720px; margin: 0 auto 18px; }
+    .cta p { max-width: 660px; margin: 0 auto 28px; color: var(--muted); font-size: 18px; line-height: 1.75; }
+
+    .footer {
+      padding: 34px 0;
+      color: #667085;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .footer .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      font-size: 14px;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .72s ease, transform .72s ease;
+      transition-delay: var(--delay, 0ms);
+    }
+
+    .reveal.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .float-soft { animation: floatSoft 5.8s ease-in-out infinite; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(47, 143, 232, .38); }
+      70% { box-shadow: 0 0 0 11px rgba(47, 143, 232, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(47, 143, 232, 0); }
+    }
+
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes rowFloat {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(4px); }
+    }
+
+    @keyframes progressPulse {
+      0%, 100% { width: 54%; }
+      50% { width: 76%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *:before, *:after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+
+    @media (max-width: 900px) {
+      * { min-width: 0; }
+      .nav-links { display: none; }
+      .wrap { width: auto; max-width: none; margin-left: 16px; margin-right: 16px; }
+      .hero { padding: 38px 0 68px; }
+      h1 { font-size: 36px; line-height: 1.18; }
+      h2 { font-size: 29px; line-height: 1.28; }
+      .lead { font-size: 16px; line-height: 1.76; }
+      .mobile-only { display: block; }
+      p, span, strong, h2, h3 { word-break: break-all; overflow-wrap: anywhere; }
+      .hero-copy, .section-head, .summary-card, .feature, .screen-detail { max-width: 100%; overflow: hidden; }
+      .section-head p { font-size: 15px; }
+      .summary-card span { font-size: 13px; }
+      .summary-card, .feature, .step, .spec, .screen-card { width: 100%; }
+      .section-head, .workflow-layout, .screen-grid, .summary, .feature-grid, .specs {
+        grid-template-columns: 1fr;
+      }
+      section { padding: 68px 0; }
+      .hero-stage { width: 100%; max-width: 100%; margin-left: auto; margin-right: auto; overflow: hidden; }
+      .hero-stage { padding: 9px; border-radius: 18px; }
+      .hero-screen { width: 100%; max-width: 100%; border-radius: 12px; }
+      .summary { grid-template-columns: 1fr; }
+      .actual-shot figcaption, .flow-card span { padding: 13px 14px; }
+      .screen-stack { gap: 28px; }
+      .screen-detail { width: 100%; padding: 10px; border-radius: 22px; }
+      .screen-copy { grid-template-columns: 1fr; gap: 16px; padding: 18px 16px 16px; }
+      .screen-copy h3 { font-size: 24px; line-height: 1.26; }
+      .screen-copy p { font-size: 14px; line-height: 1.72; }
+      .screen-tags { justify-content: flex-start; max-width: 100%; }
+      .screen-tags span { font-size: 12px; padding: 8px 10px; }
+      .screen-frame { border-radius: 16px; }
+      .screen-frame-top { height: 30px; padding: 0 12px; }
+      .screen-frame img { aspect-ratio: 16 / 11; object-fit: contain; }
+      .screen-card img { height: 230px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="site-bg"></div>
+  <div class="glow" aria-hidden="true"></div>
+
+  <header class="wrap nav">
+    <a class="brand" href="#" aria-label="Cool Player home">
+      <span class="logo">♪</span>
+      Cool Player
+    </a>
+    <nav class="nav-links" aria-label="주요 메뉴">
+      <a href="#features">소개</a>
+      <a href="#workflow">사용법</a>
+      <a href="#screens">화면</a>
+      <a href="#format">음질</a>
+      <a class="nav-download" href="https://github.com/hun8902/CoolPlayer/releases/download/v1.0.0/CoolPlayer.app.zip">다운로드</a>
+      <a class="nav-pill" href="https://github.com/hun8902/CoolPlayer">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-copy reveal">
+          <div class="kicker"><span class="pulse"></span> macOS FLAC to ALAC</div>
+          <h1>FLAC 음원을<br><span class="blue">iPhone에서<br class="mobile-only"> 듣기 좋게</span></h1>
+          <p class="lead">FLAC 파일을 ALAC로 변환하고,<br>앨범 정보와 LRC 가사까지 한 번에 정리합니다.</p>
+          <div class="hero-actions">
+            <a class="btn primary" href="https://github.com/hun8902/CoolPlayer/releases/download/v1.0.0/CoolPlayer.app.zip">다운로드</a>
+            <a class="btn secondary" href="https://github.com/hun8902/CoolPlayer">GitHub</a>
+          </div>
+        </div>
+
+        <div class="hero-stage reveal float-soft" style="--delay: 120ms">
+          <figure class="actual-shot hero-screen">
+            <img src="coolplayer-screen-convert.png" alt="Cool Player 변환 탭 실제 화면">
+            <figcaption>변환 탭 실제 화면입니다. 왼쪽 파일 리스트에서 FLAC을 추가하고, 오른쪽 변환 화면에서 출력 품질과 저장 위치를 정한 뒤 변환을 시작합니다.</figcaption>
+          </figure>
+          <div class="summary">
+            <div class="summary-card reveal" style="--delay: 180ms"><strong>파일을 한곳에서 관리</strong><span>여러 FLAC 파일을 목록에 넣고 선택한 파일만 작업합니다.</span></div>
+            <div class="summary-card reveal" style="--delay: 260ms"><strong>ALAC 출력 기준 선택</strong><span>24-bit / 192kHz 같은 출력 형식을 고릅니다.</span></div>
+            <div class="summary-card reveal" style="--delay: 340ms"><strong>변환 후 바로 확인</strong><span>완료된 파일을 플레이어 바에서 재생해 결과를 확인합니다.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="label">앱 소개</div>
+            <h2>파일을 고르고,<br>필요한 작업만 처리합니다.</h2>
+          </div>
+          <p>파일 목록을 기준으로 변환, 정보 수정, 가사 저장, 재생 확인까지 이어집니다.</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature reveal" style="--delay: 0ms"><div class="num">01</div><h3>원본 음원 분석</h3><p>파일 형식, 비트 깊이, 샘플레이트를 읽어 목록에서 바로 볼 수 있게 표시합니다.</p></article>
+          <article class="feature reveal" style="--delay: 90ms"><div class="num">02</div><h3>ALAC 변환</h3><p>FLAC 파일을 iPhone에서 다루기 쉬운 ALAC `.m4a` 형식으로 변환합니다.</p></article>
+          <article class="feature reveal" style="--delay: 180ms"><div class="num">03</div><h3>곡 정보 수정</h3><p>제목, 아티스트, 앨범명, 커버 이미지를 확인하고 필요한 정보를 보완합니다.</p></article>
+          <article class="feature reveal" style="--delay: 270ms"><div class="num">04</div><h3>LRC 가사 저장</h3><p>실시간 가사를 불러오거나 편집한 뒤 원본 파일명에 맞춰 저장합니다.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="dark">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="label">사용법</div>
+            <h2>처음 써도 흐름이 보이게.</h2>
+          </div>
+          <p>FLAC을 넣고, 체크한 파일만 변환하고, 결과를 바로 재생해 확인하는 흐름입니다.</p>
+        </div>
+
+        <div class="workflow-layout">
+          <div class="steps">
+            <div class="step reveal"><div class="badge">1</div><div><strong>파일 또는 폴더 추가</strong><span>FLAC 파일을 드래그하거나 선택해서 목록에 추가합니다.</span></div></div>
+            <div class="step reveal" style="--delay: 100ms"><div class="badge">2</div><div><strong>원본 정보 확인</strong><span>앨범아트와 음원 정보를 보고, 필요한 메타데이터를 수정합니다.</span></div></div>
+            <div class="step reveal" style="--delay: 200ms"><div class="badge">3</div><div><strong>ALAC 변환</strong><span>선택한 파일만 변환하고 지정한 위치에 저장합니다.</span></div></div>
+            <div class="step reveal" style="--delay: 300ms"><div class="badge">4</div><div><strong>결과 재생</strong><span>변환된 파일이 정상적으로 재생되는지 바로 확인합니다.</span></div></div>
+          </div>
+
+          <div class="dark-shot reveal" style="--delay: 160ms">
+            <div class="flow-card">
+              <strong>앱 화면 기준</strong>
+              <span>왼쪽 파일 리스트에서 체크한 항목만 오른쪽 변환 화면에 표시됩니다.</span>
+              <span>출력 품질과 저장 위치를 고른 뒤 변환을 시작합니다.</span>
+              <span>완료된 파일은 하단 플레이어 바에서 바로 재생 확인합니다.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screens">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="label">화면</div>
+            <h2>앱 안의 화면 흐름 그대로.</h2>
+          </div>
+          <p>실제 앱의 오른쪽 메뉴 구성을 기준으로 각 화면에서 하는 일을 설명합니다.</p>
+        </div>
+
+        <div class="screen-stack">
+          <article class="screen-detail reveal">
+            <div class="screen-copy">
+              <div>
+                <div class="screen-kicker"><span>01</span> 변환 화면</div>
+                <h3>체크한 FLAC만 ALAC로 변환</h3>
+                <p>왼쪽 파일 리스트에서 체크한 파일만 오른쪽 변환 화면에 표시됩니다. 출력 품질, 저장 위치, 진행 상태를 확인하고 변환을 시작합니다.</p>
+              </div>
+              <div class="screen-tags"><span>출력 품질</span><span>저장 위치</span><span>진행 상태</span></div>
+            </div>
+            <div class="screen-frame">
+              <div class="screen-frame-top"><i></i><i></i><i></i></div>
+              <img src="coolplayer-screen-convert.png" alt="Cool Player 변환 탭 실제 화면">
+            </div>
+          </article>
+          <article class="screen-detail reveal" style="--delay: 100ms">
+            <div class="screen-copy">
+              <div>
+                <div class="screen-kicker"><span>02</span> 정보 화면</div>
+                <h3>앨범아트와 메타데이터 확인</h3>
+                <p>선택한 음원의 앨범 커버와 메타데이터를 확인합니다. 곡명, 아티스트, 앨범 정보를 수정하고 파일에 저장할 수 있습니다.</p>
+              </div>
+              <div class="screen-tags"><span>앨범 커버</span><span>곡명</span><span>아티스트</span><span>앨범</span></div>
+            </div>
+            <div class="screen-frame">
+              <div class="screen-frame-top"><i></i><i></i><i></i></div>
+              <img src="coolplayer-screen-info.png" alt="Cool Player 정보 탭 실제 화면">
+            </div>
+          </article>
+          <article class="screen-detail reveal" style="--delay: 200ms">
+            <div class="screen-copy">
+              <div>
+                <div class="screen-kicker"><span>03</span> 가사 화면</div>
+                <h3>LRC 가사를 불러오고 저장</h3>
+                <p>선택한 곡 정보를 기준으로 실시간 가사를 불러오거나 직접 편집합니다. 저장할 때는 원본 파일명과 같은 이름의 `.lrc` 파일을 기본값으로 사용합니다.</p>
+              </div>
+              <div class="screen-tags"><span>자동 검색</span><span>직접 편집</span><span>LRC 저장</span></div>
+            </div>
+            <div class="screen-frame">
+              <div class="screen-frame-top"><i></i><i></i><i></i></div>
+              <img src="coolplayer-screen-lyrics.png" alt="Cool Player 가사 탭 실제 화면">
+            </div>
+          </article>
+          <article class="screen-detail reveal" style="--delay: 300ms">
+            <div class="screen-copy">
+              <div>
+                <div class="screen-kicker"><span>04</span> 기록 화면</div>
+                <h3>작업 결과를 시간순으로 확인</h3>
+                <p>분석, 변환, 메타데이터 저장, 가사 저장 같은 작업 결과가 쌓이는 화면입니다. 여러 파일을 처리한 뒤 어떤 작업이 끝났는지 다시 확인할 수 있습니다.</p>
+              </div>
+              <div class="screen-tags"><span>분석 기록</span><span>변환 기록</span><span>저장 기록</span></div>
+            </div>
+            <div class="screen-frame">
+              <div class="screen-frame-top"><i></i><i></i><i></i></div>
+              <img src="coolplayer-screen-history.png" alt="Cool Player 기록 탭 실제 화면">
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="format">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <div>
+            <div class="label">음질</div>
+            <h2>ALAC 24-bit / 192kHz 기준으로 정리합니다.</h2>
+          </div>
+          <p>고해상도 FLAC 파일을 Apple 기기에서 다루기 쉬운 ALAC 형식으로 변환하고, 변환 결과를 앱 안에서 바로 확인하는 흐름을 목표로 합니다.</p>
+        </div>
+
+        <div class="specs">
+          <div class="spec reveal"><small>FORMAT</small><strong>ALAC `.m4a`</strong><span>iPhone과 Apple 생태계에서 다루기 쉬운 무손실 오디오 형식입니다.</span></div>
+          <div class="spec reveal" style="--delay: 100ms"><small>QUALITY</small><strong>24-bit / 192kHz</strong><span>고해상도 음원을 기준 출력으로 맞춰 라이브러리를 정리합니다.</span></div>
+          <div class="spec reveal" style="--delay: 200ms"><small>LYRICS</small><strong>LRC 실시간 가사</strong><span>곡과 같은 이름의 `.lrc` 파일을 만들어 플레이어 연동을 준비합니다.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="download" class="cta">
+      <div class="wrap reveal">
+        <h2>Mac에서 정리하고, iPhone에서 듣기 좋게.</h2>
+        <p>Cool Player는 FLAC 라이브러리를 ALAC 기반의 재생 환경으로 옮기기 위한 첫 번째 도구입니다.</p>
+        <div class="hero-actions" style="margin-top:0">
+          <a class="btn primary" href="https://github.com/hun8902/CoolPlayer/releases/download/v1.0.0/CoolPlayer.app.zip">다운로드</a>
+          <a class="btn secondary" href="https://github.com/hun8902/CoolPlayer">GitHub</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <span>© 2026 Cool Player. All rights reserved.</span>
+      <span><a href="https://github.com/hun8902/CoolPlayer">GitHub</a></span>
+    </div>
+  </footer>
+
+  <script>
+    const revealTargets = document.querySelectorAll(".reveal");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in-view");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.16 });
+
+    revealTargets.forEach((target) => observer.observe(target));
+
+    const glow = document.querySelector(".glow");
+    window.addEventListener("pointermove", (event) => {
+      document.documentElement.style.setProperty("--mx", `${event.clientX}px`);
+      document.documentElement.style.setProperty("--my", `${event.clientY}px`);
+    });
+
+    const stage = document.querySelector(".hero-stage");
+    if (stage) {
+      stage.addEventListener("pointermove", (event) => {
+        const rect = stage.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        stage.style.transform = `rotateX(${y * -3}deg) rotateY(${x * 4}deg) translateY(-2px)`;
+      });
+      stage.addEventListener("pointerleave", () => {
+        stage.style.transform = "";
+      });
+    }
+
+  </script>
+</body>
+</html>

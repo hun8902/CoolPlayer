@@ -14,3 +14,13 @@ build/
 .build/
 .swiftpm/
 Package.resolved
+
+# Local distribution and superseded preview artifacts
+/Cool-Player-Mac.zip
+/app.js
+/style.css
+/blue-hour.mp3
+/cover.png
+/logo.svg
+/lyrics.png
+/player.png

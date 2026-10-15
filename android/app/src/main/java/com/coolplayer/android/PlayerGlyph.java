@@ -32,6 +32,11 @@ final class PlayerGlyph extends Drawable {
     canvas.scale(getBounds().width() / 24f, getBounds().height() / 24f);
     paint.setStyle(Paint.Style.STROKE);
     switch (name) {
+      case "download":
+        line(canvas, 12, 3, 12, 16);
+        line(canvas, 7, 11, 12, 16, 17, 11);
+        line(canvas, 4, 17, 4, 21, 20, 21, 20, 17);
+        break;
       case "play":
         paint.setStyle(Paint.Style.FILL);
         line(canvas, 8, 5, 19, 12, 8, 19, 8, 5);

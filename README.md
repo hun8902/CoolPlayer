@@ -2,11 +2,19 @@
 
 <img src="docs/assets/icon.png" width="110" alt="Cool Player 아이콘">
 
-**Mac에서 음악을 듣고, 가사를 찾고, 음원 정보를 정리하고, ALAC으로 변환하는 플레이어입니다.**
+**Mac과 Android에서 내 음악과 가사를 함께 듣는 플레이어입니다. Mac에서는 음원 정보 편집과 ALAC 변환도 지원합니다.**
 
-[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/latest/download/Cool-Player-Mac.zip) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
+[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.0/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
 
-## 지원 환경
+## Android
+
+Android 8.1 이상에서 FLAC/WAV/MP3/AAC/Ogg/Opus 재생, 앨범과 재생목록, 실시간 가사, 가사 자동·수동 검색, 앨범아트 변경, 백그라운드 재생, 홈 화면 위젯을 지원합니다. 펼친 폴드와 태블릿에서는 앨범아트·재생 제어와 가사를 좌우로 나란히 표시합니다.
+
+**업데이트:** 1.4.0 APK를 한 번 설치한 뒤 **설정 → 앱 업데이트 → 업데이트 확인**을 사용하세요. 새 GitHub Android 릴리스가 있으면 다운로드하고 Android 설치 화면에서 업데이트할 수 있습니다. 자동 확인은 하루에 한 번이며, 다운로드는 사용자가 선택합니다. 기존 앱은 삭제하지 마세요.
+
+[Android 사용법과 빌드 안내](android/README.md) · [릴리스 배포 안내](scripts/ANDROID-RELEASE.md)
+
+## Mac 지원 환경
 
 - macOS 14 이상
 - Apple Silicon Mac
@@ -16,7 +24,7 @@
 
 ## 설치
 
-1. [최신 릴리스](https://github.com/hun8902/CoolPlayer/releases/latest)에서 `Cool-Player-Mac.zip`을 다운로드합니다.
+1. [Mac 릴리스](https://github.com/hun8902/CoolPlayer/releases/tag/v2.1.0)에서 `Cool-Player-Mac.zip`을 다운로드합니다.
 2. 압축을 풀고 `Cool Player.app`을 응용 프로그램 폴더로 옮깁니다.
 3. 앱을 열고 음원 파일 또는 폴더를 추가합니다.
 

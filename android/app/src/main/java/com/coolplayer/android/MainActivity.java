@@ -110,10 +110,19 @@ public class MainActivity extends Activity {
         }
       };
 
+  AppUpdates updates;
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    if (updates != null) updates.resume();
+  }
+
   @Override
   public void onCreate(Bundle b) {
     super.onCreate(b);
     library = new Library(this);
+    updates = new AppUpdates(this);
     if (b != null) {
       now = b.getBoolean("now");
       tab = b.getString("tab", "곡");
@@ -121,6 +130,11 @@ public class MainActivity extends Activity {
     showPhoneLyrics = b != null && b.getBoolean("lyrics");
     colors();
     render();
+    handler.postDelayed(
+        () -> {
+          if (!destroyed) updates.automaticCheck();
+        },
+        2500);
     foldTracker =
         new androidx.window.java.layout.WindowInfoTrackerCallbackAdapter(
             androidx.window.layout.WindowInfoTracker.getOrCreate(this));
@@ -205,6 +219,7 @@ public class MainActivity extends Activity {
 
   @Override
   protected void onDestroy() {
+    updates.close();
     if (screenTransition != null) screenTransition.cancel();
     if (backdrop != null) backdrop.stop();
     destroyed = true;
@@ -2347,15 +2362,29 @@ public class MainActivity extends Activity {
             widgets.requestPinAppWidget(new ComponentName(this, PlayerWidget.class), null, null);
           else toast("홈 화면을 길게 눌러 Cool Player 위젯을 선택하세요");
         });
+    LinearLayout updateGroup = settingsGroup(stack, "앱 업데이트");
+    settingRow(
+        updateGroup, "repeat", "업데이트 확인", "현재 " + updates.version(), () -> updates.check(true));
+    settingRow(
+        updateGroup,
+        "settings",
+        "새 버전 자동 확인",
+        updates.automatic() ? "켬" : "끔",
+        () -> {
+          updates.toggleAutomatic();
+          render();
+        });
+    if (new java.io.File(getCacheDir(), "updates/Cool-Player-Android.apk").exists())
+      settingRow(updateGroup, "download", "다운로드한 업데이트 설치", "", () -> updates.install());
     LinearLayout about = settingsGroup(stack, "Cool Player");
     settingRow(
         about,
         "music",
         "앱 정보",
-        "1.3.0",
+        updates.version(),
         () ->
             new SheetDialog.Builder(this)
-                .setTitle("Cool Player 1.3.0")
+                .setTitle("Cool Player " + updates.version())
                 .setMessage(
                     "기기에 담긴 음악과 가사를 함께 듣는 플레이어\n\n"
                         + "FLAC · WAV · MP3 · AAC · Ogg · Opus\n\n"

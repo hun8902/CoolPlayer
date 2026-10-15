@@ -1,0 +1,153 @@
+package com.coolplayer.android;
+
+import android.app.PendingIntent;
+import android.content.*;
+import android.os.*;
+import androidx.media3.common.*;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.session.*;
+import java.util.*;
+import org.json.*;
+
+public class PlaybackService extends MediaSessionService {
+  ExoPlayer player;
+  MediaSession session;
+  final Handler handler = new Handler(Looper.getMainLooper());
+  static final String SLEEP = "com.coolplayer.android.SLEEP";
+  final Runnable sleep =
+      () -> {
+        if (player != null) {
+          player.pause();
+          getSharedPreferences("settings", 0).edit().remove("sleepEnd").apply();
+        }
+      };
+  final Runnable persist =
+      new Runnable() {
+        public void run() {
+          saveQueue();
+          handler.postDelayed(this, 5000);
+        }
+      };
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    player =
+        new ExoPlayer.Builder(this)
+            .setAudioAttributes(
+                new AudioAttributes.Builder()
+                    .setUsage(C.USAGE_MEDIA)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                    .build(),
+                true)
+            .setHandleAudioBecomingNoisy(true)
+            .setWakeMode(C.WAKE_MODE_LOCAL)
+            .build();
+    PendingIntent open =
+        PendingIntent.getActivity(
+            this,
+            0,
+            new Intent(this, MainActivity.class),
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    session = new MediaSession.Builder(this, player).setSessionActivity(open).build();
+    restoreQueue();
+    player.addListener(
+        new Player.Listener() {
+          @Override
+          public void onAudioSessionIdChanged(int id) {
+            getSharedPreferences("playback", 0).edit().putInt("audioSession", id).apply();
+          }
+
+          @Override
+          public void onEvents(Player p, Player.Events events) {
+            saveQueue();
+            PlayerWidget.updateAll(PlaybackService.this, p);
+          }
+        });
+    handler.post(persist);
+  }
+
+  @Override
+  public MediaSession onGetSession(MediaSession.ControllerInfo info) {
+    return session;
+  }
+
+  @Override
+  public int onStartCommand(Intent intent, int flags, int id) {
+    if (intent != null && SLEEP.equals(intent.getAction())) {
+      handler.removeCallbacks(sleep);
+      long minutes = intent.getLongExtra("minutes", 0);
+      if (minutes > 0) handler.postDelayed(sleep, minutes * 60_000);
+      getSharedPreferences("settings", 0)
+          .edit()
+          .putLong("sleepEnd", minutes > 0 ? System.currentTimeMillis() + minutes * 60_000 : 0)
+          .apply();
+    }
+    return super.onStartCommand(intent, flags, id);
+  }
+
+  void saveQueue() {
+    if (player == null) return;
+    JSONArray a = new JSONArray();
+    for (int i = 0; i < player.getMediaItemCount(); i++) a.put(player.getMediaItemAt(i).mediaId);
+    getSharedPreferences("playback", 0)
+        .edit()
+        .putString("queue", a.toString())
+        .putInt("index", player.getCurrentMediaItemIndex())
+        .putLong("position", player.getCurrentPosition())
+        .putBoolean("shuffle", player.getShuffleModeEnabled())
+        .putInt("repeat", player.getRepeatMode())
+        .putString(
+            "title",
+            String.valueOf(
+                player.getMediaMetadata().title == null
+                    ? "Cool Player"
+                    : player.getMediaMetadata().title))
+        .putString(
+            "artist",
+            String.valueOf(
+                player.getMediaMetadata().artist == null
+                    ? "음악을 선택하세요"
+                    : player.getMediaMetadata().artist))
+        .apply();
+  }
+
+  void restoreQueue() {
+    try {
+      SharedPreferences p = getSharedPreferences("playback", 0);
+      JSONArray a = new JSONArray(p.getString("queue", "[]"));
+      Library l = new Library(this);
+      ArrayList<MediaItem> items = new ArrayList<>();
+      int old = p.getInt("index", 0), index = 0;
+      for (int i = 0; i < a.length(); i++) {
+        Library.Track t = l.find(a.getString(i));
+        if (t != null) {
+          if (i == old) index = items.size();
+          items.add(t.media());
+        }
+      }
+      if (!items.isEmpty()) {
+        player.setMediaItems(items, index, p.getLong("position", 0));
+        player.prepare();
+      }
+      player.setShuffleModeEnabled(p.getBoolean("shuffle", false));
+      player.setRepeatMode(p.getInt("repeat", Player.REPEAT_MODE_OFF));
+    } catch (Exception ignored) {
+    }
+    getSharedPreferences("settings", 0).edit().remove("sleepEnd").apply();
+  }
+
+  @Override
+  public void onTaskRemoved(Intent rootIntent) {
+    if (!player.getPlayWhenReady()) stopSelf();
+  }
+
+  @Override
+  public void onDestroy() {
+    handler.removeCallbacksAndMessages(null);
+    saveQueue();
+    if (session != null) session.release();
+    if (player != null) player.release();
+    super.onDestroy();
+  }
+}

@@ -107,3 +107,7 @@ GitHub Pages는 `main` 브랜치의 `docs/` 폴더를 게시합니다. 홈페이
 ## 문제 제보
 
 [Issues](https://github.com/hun8902/CoolPlayer/issues)에 macOS 버전, 음원 형식, 수행한 작업과 표시된 오류를 남겨 주세요. 가사 문제는 곡명·가수와 선택한 검색원을 함께 적어 주세요. 개인 음악 파일을 공개로 첨부할 필요는 없습니다.
+
+## Android
+
+안드로이드 앱 소스와 빌드 방법은 [android/README.md](android/README.md)에 있습니다. Android 8.1 이상을 대상으로 FLAC 재생, 앨범아트, 실시간 가사, 백그라운드 재생, 홈 화면 위젯과 재생목록을 구현했습니다. macOS 앱과는 별도 네이티브 프로젝트이며, 지원 범위와 설치 방법은 안드로이드 문서에서 확인할 수 있습니다.

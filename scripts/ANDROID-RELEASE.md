@@ -1,13 +1,13 @@
 # Android release
 
-Keep `com.coolplayer.android` and the existing signing key. Increase both `versionCode` and `versionName` in `android/app/build.gradle`. Update `android/RELEASE_NOTES.md`, build with the private signing properties, and commit/push the source before publication.
+Keep `io.github.hun8902.coolplayer.limited` and the existing signing key. Increase both `versionCode` and `versionName` in `android/app/build.gradle`. Update `android/RELEASE_NOTES.md`, build with the private signing properties, and commit/push the source before publication.
 
 ```sh
 cd android
 COOLPLAYER_SIGNING_PROPERTIES=/private/path/release.properties ./gradlew assembleRelease
 cd ..
-git tag android-v1.4.0
-git push origin main android-v1.4.0
+git tag android-v1.4.1
+git push origin main android-v1.4.1
 python3 scripts/release-android.py \
   --apk android/app/build/outputs/apk/release/app-release.apk \
   --build-tools "$ANDROID_HOME/build-tools/36.0.0" \
@@ -21,3 +21,5 @@ The Android app reads public `android-v*` stable releases and their `android-upd
 Automatic checks occur on app launch at most once per day after a successful check. Download and installation remain explicit user actions. Android may request permission to install updates from Cool Player. The app never silently installs an APK. Existing versions before 1.4.0 need one manual APK update to obtain the updater.
 
 After publishing, update the Android version and direct APK link in `docs/index.html` and README. Keep the Mac download pinned to the Mac release: the global latest release can be Android. GitHub Pages serves `main:/docs`.
+
+The limited-distribution package is a separate installation from the legacy com.coolplayer.android app. Existing library data is not automatically migrated. Register eligible devices in Android Developer Console before limited distribution.

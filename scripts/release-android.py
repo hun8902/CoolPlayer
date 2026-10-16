@@ -11,7 +11,7 @@ a=p.parse_args(); repo='hun8902/CoolPlayer'
 subprocess.run([str(a.build_tools/'apksigner'),'verify',str(a.apk)],check=True)
 badging=subprocess.check_output([str(a.build_tools/'aapt'),'dump','badging',str(a.apk)],text=True)
 package=re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'",badging)
-if not package or package[1]!='com.coolplayer.android': raise SystemExit('Unexpected package')
+if not package or package[1]!='io.github.hun8902.coolplayer.limited': raise SystemExit('Unexpected package')
 code=int(package[2]); version=package[3]
 if not re.fullmatch(r'\d+\.\d+\.\d+',version): raise SystemExit('Stable x.y.z version required')
 minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1]); tag='android-v'+version

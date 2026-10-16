@@ -2,9 +2,13 @@
 
 기기에 저장한 음악과 가사를 함께 듣는 안드로이드 플레이어입니다. Android 8.1(API 27) 이상에서 설치할 수 있습니다.
 
+## 1.4.1 · 제한 배포
+
+패키지명은 `io.github.hun8902.coolplayer.limited`입니다. 기존 `com.coolplayer.android` 앱과 별도 설치되며 데이터는 자동 이전되지 않습니다. 기존 앱을 유지하고 새 앱에서 음악 폴더를 다시 추가하세요. 필요한 가사는 기존 앱에서 내보낼 수 있습니다. 같은 새 패키지로 배포되는 후속 버전부터 앱 안에서 업데이트합니다.
+
 ## 1.4.0 · GitHub 업데이트
 
-[Android APK 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.0/Cool-Player-Android.apk)
+[Android APK 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.1/Cool-Player-Android.apk)
 
 설정 → **앱 업데이트 → 업데이트 확인**에서 새 Android 릴리스를 찾고 다운로드합니다. 다운로드가 끝나면 **설치**를 누르고 Android 설치 화면에서 업데이트를 확정하세요. Android가 설치 권한을 요청하면 Cool Player의 ‘이 출처 허용’을 켜고 돌아옵니다.
 

@@ -18,10 +18,18 @@
     root.classList.add('scroll-enhanced');
     return {root, steps, stage, images, selected: -1};
   });
+  const layouts = [...document.querySelectorAll('[data-layout-story]')];
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   let pending = 0;
   function update() {
     pending = 0;
     const height = window.innerHeight;
+    layouts.forEach(root => {
+      const rect = root.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > height) return;
+      const progress = reducedMotion.matches ? 1 : Math.max(0, Math.min(1, (height * .22 - rect.top) / Math.max(1, rect.height - height)));
+      root.style.setProperty('--open', progress.toFixed(4));
+    });
     const mobile = matchMedia('(max-width: 760px)').matches;
     stories.forEach(story => {
       const bounds = story.root.getBoundingClientRect();

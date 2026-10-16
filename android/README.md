@@ -2,13 +2,13 @@
 
 기기에 저장한 음악과 가사를 함께 듣는 안드로이드 플레이어입니다. Android 8.1(API 27) 이상에서 설치할 수 있습니다.
 
-## 1.4.1 · 제한 배포
+## 1.4.2 · 기존 패키지 복원
 
-패키지명은 `io.github.hun8902.coolplayer.limited`입니다. 기존 `com.coolplayer.android` 앱과 별도 설치되며 데이터는 자동 이전되지 않습니다. 기존 앱을 유지하고 새 앱에서 음악 폴더를 다시 추가하세요. 필요한 가사는 기존 앱에서 내보낼 수 있습니다. 같은 새 패키지로 배포되는 후속 버전부터 앱 안에서 업데이트합니다.
+기본 배포를 `com.coolplayer.android`로 복원했습니다. 기존 1.4.0 이하 앱 위에 설치하며 보관함과 설정을 유지합니다. 1.4.1 사용자는 앱 설정에서 같은 패키지의 호환 업데이트를 받을 수 있습니다. 보관함과 설정을 유지하려면 기존 앱을 삭제하지 마세요.
 
 ## 1.4.0 · GitHub 업데이트
 
-[Android APK 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.1/Cool-Player-Android.apk)
+[Android APK 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.2/Cool-Player-Android.apk)
 
 설정 → **앱 업데이트 → 업데이트 확인**에서 새 Android 릴리스를 찾고 다운로드합니다. 다운로드가 끝나면 **설치**를 누르고 Android 설치 화면에서 업데이트를 확정하세요. Android가 설치 권한을 요청하면 Cool Player의 ‘이 출처 허용’을 켜고 돌아옵니다.
 
@@ -111,3 +111,16 @@ COOLPLAYER_SIGNING_PROPERTIES=/private/path/release.properties ./gradlew assembl
 Media3 ExoPlayer/Session, AndroidX Annotation 및 Gradle을 사용합니다. 해당 구성요소의 라이선스는 각 공식 프로젝트에 따릅니다.
 
 이 전달본은 APK 컴파일과 패키징을 완료한 상태입니다. 요청에 따라 실제 기기 재생·UI·위젯 기능 테스트는 실행하지 않았습니다.
+
+
+### 음악과 가사
+
+- 첫 설치에는 Amazing Grace와 해당 녹음에 맞춘 LRC가 포함됩니다. 곡 메뉴에서 보관함에서 제거하면 다시 추가되지 않습니다.
+- 앨범아트를 좌우로 밀어 이전·다음 곡을 선택하세요. 앨범아트 변경은 곡의 ⋯ 메뉴에 있습니다.
+- 가사 ⋯ 메뉴에서 자동 가져오기, 직접 검색, LRC 가져오기, 편집과 내보내기를 선택합니다. 가사가 없으면 가운데 가져오기 버튼을 사용할 수 있습니다.
+- 검색 창의 **가수로만 검색**은 곡명 조건을 지웁니다. 요아소비, 요네즈 켄시·요네즈 캔시 표기는 YOASOBI, Kenshi Yonezu, 米津玄師로도 검색합니다.
+- 설정 → 화면과 가사에서 글자 크기와 메뉴 언어(한국어·English·日本語)를 선택합니다. 음원 제목과 가사 원문은 번역하지 않습니다.
+
+### 호환 업데이트
+
+기본 패키지는 `com.coolplayer.android`입니다. 1.4.1의 별도 패키지를 사용하는 경우 `-PcompatibilityPackage`로 빌드한 동일 기능의 APK를 제공합니다. `android-v1.4.2-compat` 릴리스는 이 설치본을 위한 업데이트입니다. 앱은 자신의 패키지와 서명에 맞는 업데이트만 설치합니다.

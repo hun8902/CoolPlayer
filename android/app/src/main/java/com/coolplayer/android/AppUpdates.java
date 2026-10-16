@@ -78,17 +78,17 @@ final class AppUpdates {
     new SheetDialog.Builder(a)
         .setTitle(title)
         .setMessage(body)
-        .setPositiveButton("확인", null)
+        .setPositiveButton(a.tr("확인"), null)
         .show();
   }
 
   void check(boolean manual) {
     if (busy) {
-      if (manual) a.toast("업데이트를 처리하고 있습니다");
+      if (manual) a.toast(a.tr("업데이트를 처리하고 있습니다"));
       return;
     }
     busy = true;
-    if (manual) a.toast("새 버전을 확인하고 있습니다");
+    if (manual) a.toast(a.tr("새 버전을 확인하고 있습니다"));
     worker.execute(
         () -> {
           try {
@@ -118,7 +118,7 @@ final class AppUpdates {
                   requireAsset(m.getString("apkUrl"));
                   if (!m.getString("sha256").matches("[a-fA-F0-9]{64}")
                       || m.getLong("size") <= 0
-                      || m.getLong("size") > 200000000) throw new IOException("업데이트 정보가 올바르지 않습니다");
+                      || m.getLong("size") > 200000000) throw new IOException(a.tr("업데이트 정보가 올바르지 않습니다"));
                   if (m.getInt("minSdk") <= Build.VERSION.SDK_INT
                       && (best == null || m.getLong("versionCode") > best.getLong("versionCode")))
                     best = m;
@@ -135,20 +135,20 @@ final class AppUpdates {
                     new SheetDialog.Builder(a)
                         .setTitle("Cool Player " + found.optString("versionName"))
                         .setMessage(
-                            "현재 버전 "
+                            a.tr("현재 버전 ")
                                 + version()
                                 + "\n\n"
-                                + found.optString("notes", "새 버전을 사용할 수 있습니다.")
-                                + "\n\n다운로드 후 Android 설치 화면에서 업데이트를 확정합니다.")
-                        .setPositiveButton("다운로드", (d, w) -> download(found))
-                        .setNegativeButton("나중에", null)
+                                + found.optString("notes", a.tr("새 버전을 사용할 수 있습니다."))
+                                + a.tr("\n\n다운로드 후 Android 설치 화면에서 업데이트를 확정합니다."))
+                        .setPositiveButton(a.tr("다운로드"), (d, w) -> download(found))
+                        .setNegativeButton(a.tr("나중에"), null)
                         .show();
                   } else if (manual)
                     message(
-                        "업데이트 확인",
+                        a.tr("업데이트 확인"),
                         found == null
-                            ? "공개된 Android 업데이트 정보를 찾지 못했습니다. 잠시 후 다시 확인해 주세요."
-                            : "최신 버전을 사용하고 있습니다.\nCool Player " + version());
+                            ? a.tr("공개된 Android 업데이트 정보를 찾지 못했습니다. 잠시 후 다시 확인해 주세요.")
+                            : a.tr("최신 버전을 사용하고 있습니다.\nCool Player ") + version());
                 });
           } catch (Exception e) {
             ui(
@@ -156,8 +156,8 @@ final class AppUpdates {
                   busy = false;
                   if (manual)
                     message(
-                        "업데이트를 확인하지 못했습니다",
-                        "네트워크 연결 또는 GitHub 응답을 확인한 뒤 다시 시도해 주세요.\n\n" + e.getMessage());
+                        a.tr("업데이트를 확인하지 못했습니다"),
+                        a.tr("네트워크 연결 또는 GitHub 응답을 확인한 뒤 다시 시도해 주세요.\n\n") + e.getMessage());
                 });
           }
         });
@@ -172,7 +172,7 @@ final class AppUpdates {
   HttpURLConnection open(String address) throws IOException {
     URL url = new URL(address);
     for (int n = 0; n < 6; n++) {
-      if (!url.getProtocol().equals("https")) throw new IOException("HTTPS 연결이 필요합니다");
+      if (!url.getProtocol().equals("https")) throw new IOException(a.tr("HTTPS 연결이 필요합니다"));
       HttpURLConnection c = (HttpURLConnection) url.openConnection();
       c.setConnectTimeout(15000);
       c.setReadTimeout(30000);
@@ -182,7 +182,7 @@ final class AppUpdates {
       if (status >= 300 && status < 400) {
         String location = c.getHeaderField("Location");
         c.disconnect();
-        if (location == null) throw new IOException("다운로드 주소가 없습니다");
+        if (location == null) throw new IOException(a.tr("다운로드 주소가 없습니다"));
         url = new URL(url, location);
         continue;
       }
@@ -192,7 +192,7 @@ final class AppUpdates {
       }
       return c;
     }
-    throw new IOException("다운로드 연결을 완료하지 못했습니다");
+    throw new IOException(a.tr("다운로드 연결을 완료하지 못했습니다"));
   }
 
   String read(String url, int limit) throws Exception {
@@ -211,12 +211,12 @@ final class AppUpdates {
   void download(JSONObject info) {
     if (busy) return;
     busy = true;
-    TextView progress = a.text("다운로드 준비 중…", 16, a.ink);
+    TextView progress = a.text(a.tr("다운로드 준비 중…"), 16, a.ink);
     SheetDialog dialog =
         new SheetDialog.Builder(a)
-            .setTitle("업데이트 다운로드")
+            .setTitle(a.tr("업데이트 다운로드"))
             .setView(progress)
-            .setNegativeButton("닫기", null)
+            .setNegativeButton(a.tr("닫기"), null)
             .show();
     worker.execute(
         () -> {
@@ -234,22 +234,22 @@ final class AppUpdates {
               int n;
               while ((n = in.read(buffer)) != -1) {
                 if (closed || Thread.currentThread().isInterrupted())
-                  throw new IOException("다운로드가 중단되었습니다");
+                  throw new IOException(a.tr("다운로드가 중단되었습니다"));
                 count += n;
-                if (count > expected) throw new IOException("파일 크기가 일치하지 않습니다");
+                if (count > expected) throw new IOException(a.tr("파일 크기가 일치하지 않습니다"));
                 out.write(buffer, 0, n);
                 int percent = (int) (count * 100 / expected);
                 if (percent != previous) {
                   previous = percent;
-                  ui(() -> progress.setText("다운로드 중 · " + percent + "%"));
+                  ui(() -> progress.setText(a.tr("다운로드 중 · ") + percent + "%"));
                 }
               }
-              if (count != expected) throw new IOException("파일 다운로드가 완료되지 않았습니다");
+              if (count != expected) throw new IOException(a.tr("파일 다운로드가 완료되지 않았습니다"));
             } finally {
               c.disconnect();
             }
             verify(part, info);
-            if (!part.renameTo(target)) throw new IOException("업데이트 파일을 저장하지 못했습니다");
+            if (!part.renameTo(target)) throw new IOException(a.tr("업데이트 파일을 저장하지 못했습니다"));
             prefs.edit().putString("pending", info.toString()).apply();
             ui(
                 () -> {
@@ -264,7 +264,7 @@ final class AppUpdates {
                 () -> {
                   busy = false;
                   dialog.dismiss();
-                  message("업데이트 다운로드 실패", e.getMessage() + "\n\n설정에서 업데이트 확인을 눌러 다시 시도하세요.");
+                  message(a.tr("업데이트 다운로드 실패"), e.getMessage() + a.tr("\n\n설정에서 업데이트 확인을 눌러 다시 시도하세요."));
                 });
           }
         });
@@ -280,7 +280,7 @@ final class AppUpdates {
     StringBuilder hex = new StringBuilder();
     for (byte b : digest.digest()) hex.append(String.format(Locale.ROOT, "%02x", b & 255));
     if (!hex.toString().equalsIgnoreCase(info.getString("sha256")))
-      throw new IOException("다운로드 파일의 체크섬이 일치하지 않습니다");
+      throw new IOException(a.tr("다운로드 파일의 체크섬이 일치하지 않습니다"));
     int flags =
         Build.VERSION.SDK_INT >= 28
             ? PackageManager.GET_SIGNING_CERTIFICATES
@@ -291,7 +291,7 @@ final class AppUpdates {
     if (next == null
         || !a.getPackageName().equals(next.packageName)
         || code(next) != info.getLong("versionCode")
-        || code(next) <= code(current)) throw new IOException("설치할 앱의 패키지 또는 버전이 올바르지 않습니다");
+        || code(next) <= code(current)) throw new IOException(a.tr("설치할 앱의 패키지 또는 버전이 올바르지 않습니다"));
     Signature[] n =
         Build.VERSION.SDK_INT >= 28 ? next.signingInfo.getApkContentsSigners() : next.signatures;
     Signature[] c =
@@ -302,15 +302,15 @@ final class AppUpdates {
         || c == null
         || n.length == 0
         || !new HashSet<>(Arrays.asList(n)).equals(new HashSet<>(Arrays.asList(c))))
-      throw new IOException("기존 앱과 서명키가 일치하지 않습니다");
+      throw new IOException(a.tr("기존 앱과 서명키가 일치하지 않습니다"));
   }
 
   void offerInstall() {
     new SheetDialog.Builder(a)
-        .setTitle("설치 준비 완료")
-        .setMessage("새 버전을 설치해도 음악 보관함과 설정은 유지됩니다. Android 설치 화면에서 업데이트를 눌러 주세요.")
-        .setPositiveButton("설치", (d, w) -> install())
-        .setNegativeButton("나중에", null)
+        .setTitle(a.tr("설치 준비 완료"))
+        .setMessage(a.tr("새 버전을 설치해도 음악 보관함과 설정은 유지됩니다. Android 설치 화면에서 업데이트를 눌러 주세요."))
+        .setPositiveButton(a.tr("설치"), (d, w) -> install())
+        .setNegativeButton(a.tr("나중에"), null)
         .show();
   }
 
@@ -324,10 +324,10 @@ final class AppUpdates {
   void install() {
     if (!a.getPackageManager().canRequestPackageInstalls()) {
       new SheetDialog.Builder(a)
-          .setTitle("업데이트 설치 허용")
-          .setMessage("Android 설정에서 Cool Player의 ‘이 출처 허용’을 켜면 다운로드한 업데이트를 설치할 수 있습니다.")
+          .setTitle(a.tr("업데이트 설치 허용"))
+          .setMessage(a.tr("Android 설정에서 Cool Player의 ‘이 출처 허용’을 켜면 다운로드한 업데이트를 설치할 수 있습니다."))
           .setPositiveButton(
-              "설정 열기",
+              a.tr("설정 열기"),
               (d, w) -> {
                 try {
                   waitingForPermission = true;
@@ -337,10 +337,10 @@ final class AppUpdates {
                           Uri.parse("package:" + a.getPackageName())));
                 } catch (Exception e) {
                   waitingForPermission = false;
-                  message("설정을 열지 못했습니다", e.getMessage());
+                  message(a.tr("설정을 열지 못했습니다"), e.getMessage());
                 }
               })
-          .setNegativeButton("취소", null)
+          .setNegativeButton(a.tr("취소"), null)
           .show();
       return;
     }
@@ -362,14 +362,14 @@ final class AppUpdates {
                             .setDataAndType(uri, "application/vnd.android.package-archive")
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
                   } catch (Exception e) {
-                    message("설치 화면을 열지 못했습니다", e.getMessage());
+                    message(a.tr("설치 화면을 열지 못했습니다"), e.getMessage());
                   }
                 });
           } catch (Exception e) {
             ui(
                 () -> {
                   busy = false;
-                  message("설치할 수 없습니다", e.getMessage());
+                  message(a.tr("설치할 수 없습니다"), e.getMessage());
                 });
           }
         });

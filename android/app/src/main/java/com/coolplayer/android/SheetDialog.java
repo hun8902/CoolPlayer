@@ -218,12 +218,12 @@ final class SheetDialog extends Dialog {
     }
 
     Builder setTitle(String s) {
-      title = s;
+      title = a.tr(s);
       return this;
     }
 
     Builder setMessage(String s) {
-      message = s;
+      message = a.tr(s);
       return this;
     }
 
@@ -233,13 +233,15 @@ final class SheetDialog extends Dialog {
     }
 
     Builder setItems(String[] s, DialogInterface.OnClickListener listener) {
-      items = s;
+      items = s.clone();
+      for (int i = 0; i < items.length; i++) items[i] = a.tr(items[i]);
       select = listener;
       return this;
     }
 
     Builder setSingleChoiceItems(String[] s, int choice, DialogInterface.OnClickListener listener) {
-      items = s;
+      items = s.clone();
+      for (int i = 0; i < items.length; i++) items[i] = a.tr(items[i]);
       selected = choice;
       single = true;
       select = listener;
@@ -247,17 +249,17 @@ final class SheetDialog extends Dialog {
     }
 
     Builder setPositiveButton(String s, DialogInterface.OnClickListener listener) {
-      actions.add(new Action(s, DialogInterface.BUTTON_POSITIVE, listener));
+      actions.add(new Action(a.tr(s), DialogInterface.BUTTON_POSITIVE, listener));
       return this;
     }
 
     Builder setNegativeButton(String s, DialogInterface.OnClickListener listener) {
-      actions.add(new Action(s, DialogInterface.BUTTON_NEGATIVE, listener));
+      actions.add(new Action(a.tr(s), DialogInterface.BUTTON_NEGATIVE, listener));
       return this;
     }
 
     Builder setNeutralButton(String s, DialogInterface.OnClickListener listener) {
-      actions.add(new Action(s, DialogInterface.BUTTON_NEUTRAL, listener));
+      actions.add(new Action(a.tr(s), DialogInterface.BUTTON_NEUTRAL, listener));
       return this;
     }
 

@@ -4,15 +4,14 @@
 
 **Mac과 Android에서 내 음악과 가사를 함께 듣는 플레이어입니다. Mac에서는 음원 정보 편집과 ALAC 변환도 지원합니다.**
 
-[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.1/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
+[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.2/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
 
 ## Android
 
 Android 8.1 이상에서 FLAC/WAV/MP3/AAC/Ogg/Opus 재생, 앨범과 재생목록, 실시간 가사, 가사 자동·수동 검색, 앨범아트 변경, 백그라운드 재생, 홈 화면 위젯을 지원합니다. 펼친 폴드와 태블릿에서는 앨범아트·재생 제어와 가사를 좌우로 나란히 표시합니다.
 
-**제한 배포:** 1.4.1은 새 패키지 `io.github.hun8902.coolplayer.limited`로 설치됩니다. 기존 앱과 별개이므로 음악 폴더를 다시 추가해야 합니다. 콘솔에서 승인한 기기를 대상으로 합니다.
+**업데이트:** 앱의 **설정 → 앱 업데이트 → 업데이트 확인**을 사용하세요. 자신의 설치본에 맞는 GitHub 릴리스를 내려받고 Android 설치 화면에서 업데이트할 수 있습니다. 자동 확인은 하루에 한 번이며 다운로드와 설치는 직접 선택합니다. 기존 앱을 삭제하지 마세요.
 
-**업데이트:** 새 제한 배포용 APK를 설치한 뒤 **설정 → 앱 업데이트 → 업데이트 확인**을 사용하세요. 새 GitHub Android 릴리스가 있으면 다운로드하고 Android 설치 화면에서 업데이트할 수 있습니다. 자동 확인은 하루에 한 번이며, 다운로드는 사용자가 선택합니다. 기존 앱은 삭제하지 마세요.
 
 [Android 사용법과 빌드 안내](android/README.md) · [릴리스 배포 안내](scripts/ANDROID-RELEASE.md)
 
@@ -108,7 +107,7 @@ xcodebuild -project CoolPlayer.xcodeproj -scheme CoolPlayer \
 | `Tests/` | 오디오 및 변환 스모크 도구 |
 | `scripts/package-release.sh` | 릴리스 앱과 ZIP 생성 |
 
-GitHub Pages는 `main` 브랜치의 `docs/` 폴더를 게시합니다. 홈페이지 다운로드는 GitHub 최신 릴리스의 `Cool-Player-Mac.zip`으로 연결됩니다.
+GitHub Pages는 `main` 브랜치의 `docs/` 폴더를 게시합니다. Mac 다운로드는 `v2.1.0`의 `Cool-Player-Mac.zip`, Android 다운로드는 해당 Android 릴리스의 APK로 연결됩니다.
 
 ## 홈페이지 음원
 
@@ -121,3 +120,10 @@ GitHub Pages는 `main` 브랜치의 `docs/` 폴더를 게시합니다. 홈페이
 ## Android
 
 안드로이드 앱 소스와 빌드 방법은 [android/README.md](android/README.md)에 있습니다. Android 8.1 이상을 대상으로 FLAC 재생, 앨범아트, 실시간 가사, 백그라운드 재생, 홈 화면 위젯과 재생목록을 구현했습니다. macOS 앱과는 별도 네이티브 프로젝트이며, 지원 범위와 설치 방법은 안드로이드 문서에서 확인할 수 있습니다.
+
+
+### 1.4.2 Android 업데이트
+
+앨범아트 좌우 스와이프, 가사 글자 크기, 한국어·영어·일본어 메뉴 설정을 추가했습니다. 요아소비·요네즈 켄시 이름 변환과 가수 단독 검색을 보완했습니다. 첫 설치에는 삭제 가능한 Amazing Grace 음원과 동기화 가사가 포함됩니다.
+
+기존 앱의 **설정 → 앱 업데이트 → 업데이트 확인**에서 새 버전을 설치하세요. 1.4.1 사용자를 위한 같은 패키지의 호환 릴리스도 제공합니다. 기존 앱을 삭제하지 않아야 보관함과 설정이 유지됩니다. 앱에 별도 기기 승인 절차는 없습니다.

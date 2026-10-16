@@ -125,26 +125,34 @@ final class Lyrics {
     } catch (Exception e) {
       out.notice = "Bugs 연결이 원활하지 않습니다. ";
     }
-    if (page == 0)
-      try {
-        JSONArray array = new JSONArray(request("https://lrclib.net/api/search?q=" + enc(query)));
-        for (int i = 0; i < array.length(); i++) {
-          JSONObject j = array.getJSONObject(i);
-          Result r = new Result();
-          r.source = "LRCLIB";
-          r.id = j.optString("id");
-          r.title = j.optString("trackName");
-          r.artist = j.optString("artistName");
-          r.album = j.optString("albumName");
-          r.text =
-              j.isNull("syncedLyrics")
-                  ? j.optString("plainLyrics", "")
-                  : j.optString("syncedLyrics", "");
-          if (!r.text.trim().isEmpty()) out.results.add(r);
+    if (page == 0) {
+      LinkedHashSet<String> queries = new LinkedHashSet<>();
+      queries.add(query);
+      queries.add(international(query));
+      queries.add(international(query).replace("Kenshi Yonezu", "米津玄師"));
+      HashSet<String> ids = new HashSet<>();
+      ArrayList<Result> internationalResults = new ArrayList<>();
+      for (String term : queries) {
+        try {
+          JSONArray array = new JSONArray(request("https://lrclib.net/api/search?q=" + enc(term)));
+          for (int i = 0; i < array.length(); i++) {
+            JSONObject j = array.getJSONObject(i);
+            Result r = new Result();
+            r.source = "LRCLIB";
+            r.id = j.optString("id");
+            r.title = j.optString("trackName");
+            r.artist = j.optString("artistName");
+            r.album = j.optString("albumName");
+            r.text = j.optString("syncedLyrics", "");
+            if (r.text.trim().isEmpty() || r.text.equals("null")) r.text = j.optString("plainLyrics", "");
+            if (!r.text.trim().isEmpty() && !r.text.equals("null") && ids.add(r.id)) internationalResults.add(r);
+          }
+        } catch (Exception e) {
+          out.notice += "LRCLIB 연결을 확인해 주세요. ";
         }
-      } catch (Exception e) {
-        out.notice += "LRCLIB에 연결하지 못했습니다.";
       }
+      out.results.addAll(0, internationalResults);
+    }
     return out;
   }
 
@@ -182,8 +190,15 @@ final class Lyrics {
     throw new IOException("이 곡에 제공되는 가사가 없습니다");
   }
 
+  static String international(String query) {
+    return Normalizer.normalize(query, Normalizer.Form.NFKC)
+        .replaceAll("(?i)요아소비|ヨアソビ", "YOASOBI")
+        .replaceAll("요네즈[\\s]*[켄캔]시|米津玄師", "Kenshi Yonezu")
+        .replace("아이묭", "aimyon").replace("아도", "Ado");
+  }
+
   static String norm(String s) {
-    return Normalizer.normalize(s, Normalizer.Form.NFC)
+    return Normalizer.normalize(international(s), Normalizer.Form.NFKC)
         .toLowerCase(Locale.ROOT)
         .replace("십센치", "10cm")
         .replace("아이유", "iu")

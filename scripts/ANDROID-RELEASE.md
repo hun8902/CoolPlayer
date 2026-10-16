@@ -1,13 +1,13 @@
 # Android release
 
-Keep `io.github.hun8902.coolplayer.limited` and the existing signing key. Increase both `versionCode` and `versionName` in `android/app/build.gradle`. Update `android/RELEASE_NOTES.md`, build with the private signing properties, and commit/push the source before publication.
+Keep the default `com.coolplayer.android` package and the existing signing key. Increase both `versionCode` and `versionName` in `android/app/build.gradle`. Update `android/RELEASE_NOTES.md`, build with the private signing properties, and commit/push the source before publication.
 
 ```sh
 cd android
 COOLPLAYER_SIGNING_PROPERTIES=/private/path/release.properties ./gradlew assembleRelease
 cd ..
-git tag android-v1.4.1
-git push origin main android-v1.4.1
+git tag android-v1.4.2
+git push origin main android-v1.4.2
 python3 scripts/release-android.py \
   --apk android/app/build/outputs/apk/release/app-release.apk \
   --build-tools "$ANDROID_HOME/build-tools/36.0.0" \
@@ -22,4 +22,4 @@ Automatic checks occur on app launch at most once per day after a successful che
 
 After publishing, update the Android version and direct APK link in `docs/index.html` and README. Keep the Mac download pinned to the Mac release: the global latest release can be Android. GitHub Pages serves `main:/docs`.
 
-The limited-distribution package is a separate installation from the legacy com.coolplayer.android app. Existing library data is not automatically migrated. Register eligible devices in Android Developer Console before limited distribution.
+For users who installed 1.4.1, also build with `-PcompatibilityPackage` and package with `--compatibility`. This uses `io.github.hun8902.coolplayer.limited` with the same feature set and signer, tagged `android-v1.4.2-compat`. Publish that release first, then the default package as latest. Keep both update metadata assets: existing apps filter by their installed package ID. This does not introduce an in-app device registration requirement. Never change an installed package ID to attempt an in-place upgrade.

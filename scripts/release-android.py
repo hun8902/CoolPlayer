@@ -7,14 +7,16 @@ p.add_argument('--build-tools',required=True,type=pathlib.Path)
 p.add_argument('--notes',required=True,type=pathlib.Path)
 p.add_argument('--out',default='dist/android',type=pathlib.Path)
 p.add_argument('--publish',action='store_true')
+p.add_argument('--compatibility',action='store_true',help='Update the separate Android 1.4.1 package')
 a=p.parse_args(); repo='hun8902/CoolPlayer'
 subprocess.run([str(a.build_tools/'apksigner'),'verify',str(a.apk)],check=True)
 badging=subprocess.check_output([str(a.build_tools/'aapt'),'dump','badging',str(a.apk)],text=True)
 package=re.search(r"package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'",badging)
-if not package or package[1]!='io.github.hun8902.coolplayer.limited': raise SystemExit('Unexpected package')
+expected='io.github.hun8902.coolplayer.limited' if a.compatibility else 'com.coolplayer.android'
+if not package or package[1]!=expected: raise SystemExit('Unexpected package')
 code=int(package[2]); version=package[3]
 if not re.fullmatch(r'\d+\.\d+\.\d+',version): raise SystemExit('Stable x.y.z version required')
-minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1]); tag='android-v'+version
+minimum=int(re.search(r"sdkVersion:'(\d+)'",badging)[1]); tag='android-v'+version+('-compat' if a.compatibility else '')
 notes=a.notes.read_text(); a.out.mkdir(parents=True,exist_ok=True)
 apk=a.out/'Cool-Player-Android.apk'; shutil.copyfile(a.apk,apk)
 digest=hashlib.sha256(apk.read_bytes()).hexdigest()
@@ -45,7 +47,7 @@ if remote['object']['sha']!=local: raise SystemExit('Remote tag does not match l
 try: release=api(f'/repos/{repo}/releases/tags/{tag}')
 except urllib.error.HTTPError as e:
  if e.code!=404: raise
- release=api(f'/repos/{repo}/releases','POST',{'tag_name':tag,'name':'Cool Player for Android '+version,'body':notes,'draft':True,'prerelease':False})
+ release=api(f'/repos/{repo}/releases','POST',{'tag_name':tag,'name':'Cool Player for Android '+version+(' — 1.4.1 compatibility update' if a.compatibility else ''),'body':notes,'draft':True,'prerelease':False})
 if not release['draft']: raise SystemExit('Release already published; use a new version rather than replacing installed artifacts')
 base=release['upload_url'].split('{')[0]
 for f in files:
@@ -57,5 +59,5 @@ for f in files:
  mime='application/vnd.android.package-archive' if f.suffix=='.apk' else 'application/json' if f.suffix=='.json' else 'text/plain'
  api(base+'?name='+urllib.parse.quote(f.name),'POST',raw=f.read_bytes(),mime=mime)
  print('Uploaded',f.name,flush=True)
-release=api(f'/repos/{repo}/releases/{release["id"]}','PATCH',{'draft':False,'make_latest':'true'})
+release=api(f'/repos/{repo}/releases/{release["id"]}','PATCH',{'draft':False,'make_latest':'false' if a.compatibility else 'true'})
 print('Published',release['html_url'],flush=True)

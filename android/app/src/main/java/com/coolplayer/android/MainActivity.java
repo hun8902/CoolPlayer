@@ -308,7 +308,7 @@ public class MainActivity extends Activity {
   }
 
   TextView button(String s, Runnable action) {
-    TextView b = text(s, 15, accent);
+    TextView b = text(tr(s), 15, accent);
     b.setGravity(Gravity.CENTER);
     b.setPadding(dp(12), dp(10), dp(12), dp(10));
     b.setMinHeight(dp(48));
@@ -327,11 +327,11 @@ public class MainActivity extends Activity {
   }
 
   void heading(LinearLayout l, String title, String sub) {
-    TextView t = text(title, 26, ink);
+    TextView t = text(tr(title), 26, ink);
     t.setTypeface(null, Typeface.BOLD);
     l.addView(t);
     if (!sub.isEmpty()) {
-      TextView st = text(sub, 13, muted);
+      TextView st = text(tr(sub), 13, muted);
       st.setPadding(0, dp(5), 0, dp(12));
       l.addView(st);
     }
@@ -340,7 +340,7 @@ public class MainActivity extends Activity {
   void toast(String s) {
     runOnUiThread(
         () -> {
-          if (!destroyed) Toast.makeText(this, s, Toast.LENGTH_LONG).show();
+          if (!destroyed) Toast.makeText(this, tr(s), Toast.LENGTH_LONG).show();
         });
   }
 
@@ -398,7 +398,7 @@ public class MainActivity extends Activity {
       String label = labels[i];
       TextView v =
           button(
-              label,
+              tr(label),
               () -> {
                 tab = label;
                 albumFilter = "";
@@ -530,7 +530,7 @@ public class MainActivity extends Activity {
     renderedLyrics = showPhoneLyrics;
     transitionScreen(previous, wasNow, wasTab, wasLyrics);
     if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
-    root.setOnApplyWindowInsetsListener(
+    screenHost.setOnApplyWindowInsetsListener(
         (v, insets) -> {
           int left = 0, right = 0, top = 0, bottom = 0;
           if (Build.VERSION.SDK_INT >= 30) {
@@ -558,7 +558,7 @@ public class MainActivity extends Activity {
               ? WindowInsets.CONSUMED
               : insets.consumeSystemWindowInsets();
         });
-    root.requestApplyInsets();
+    screenHost.requestApplyInsets();
     mini = null;
     miniArt = null;
     timeline = null;
@@ -616,7 +616,7 @@ public class MainActivity extends Activity {
     input.setTextSize(15);
     input.setTextColor(ink);
     input.setHintTextColor(muted);
-    input.setHint("곡, 가수, 앨범 검색");
+    input.setHint(tr("곡, 가수, 앨범 검색"));
     input.setText(query);
     input.setBackground(shape(card, 16));
     input.setPadding(dp(16), 0, dp(12), 0);
@@ -641,7 +641,7 @@ public class MainActivity extends Activity {
     adapter = new TrackAdapter();
     list.setAdapter(adapter);
     body.addView(list, new LinearLayout.LayoutParams(-1, 0, 1));
-    TextView empty = text("아직 음악이 없습니다.\n오른쪽 위 ＋에서 파일이나 폴더를 추가하세요.", 15, muted);
+    TextView empty = text(tr("아직 음악이 없습니다.\n오른쪽 위 ＋에서 파일이나 폴더를 추가하세요."), 15, muted);
     empty.setGravity(Gravity.CENTER);
     body.addView(empty, new LinearLayout.LayoutParams(-1, -2));
     list.setEmptyView(empty);
@@ -840,7 +840,7 @@ public class MainActivity extends Activity {
     if (line != null)
       while (count++ % columns != 0)
         line.addView(new Space(this), new LinearLayout.LayoutParams(0, 1, 1));
-    if (albums.isEmpty()) grid.addView(text("음악 폴더를 추가하면 앨범이 여기에 모입니다.", 15, muted));
+    if (albums.isEmpty()) grid.addView(text(tr("음악 폴더를 추가하면 앨범이 여기에 모입니다."), 15, muted));
   }
 
   void renderPlaylists() {
@@ -905,7 +905,7 @@ public class MainActivity extends Activity {
     mini.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
     LinearLayout labels = column();
     labels.setPadding(dp(12), 0, dp(8), 0);
-    miniTitle = text("음악을 선택하세요", 14, ink);
+    miniTitle = text(tr("음악을 선택하세요"), 14, ink);
     miniTitle.setTypeface(null, Typeface.BOLD);
     miniTitle.setSingleLine();
     miniTitle.setEllipsize(TextUtils.TruncateAt.END);
@@ -1144,7 +1144,7 @@ public class MainActivity extends Activity {
               now = false;
               render();
             }));
-    TextView title = text("지금 재생 중", 13, muted);
+    TextView title = text(tr("지금 재생 중"), 13, muted);
     title.setGravity(Gravity.CENTER);
     top.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
     top.addView(icon("queue", "재생 대기열", this::showQueue));
@@ -1193,7 +1193,7 @@ public class MainActivity extends Activity {
         boolean lyric = label.equals("가사");
         TextView v =
             button(
-                label,
+                tr(label),
                 () -> {
                   showPhoneLyrics = lyric;
                   render();
@@ -1245,32 +1245,29 @@ public class MainActivity extends Activity {
             art.setLayoutParams(p);
           }
         });
-    nowArt.setContentDescription("앨범아트 변경");
-    nowArt.setOnClickListener(
-        v -> {
-          if (t != null) artworkMenu(t);
-        });
+    nowArt.setContentDescription(tr("앨범아트 · 좌우로 밀어 곡 변경"));
+    final float[] origin = new float[2];
+    nowArt.setOnTouchListener((v, event) -> {
+      if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+        origin[0] = event.getX(); origin[1] = event.getY();
+        return true;
+      }
+      if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+        float dx = event.getX() - origin[0], dy = event.getY() - origin[1];
+        if (Math.abs(dx) > dp(64) && Math.abs(dx) > Math.abs(dy) * 1.5f && player != null) {
+          if (dx < 0) player.seekToNextMediaItem(); else player.seekToPreviousMediaItem();
+        } else v.performClick();
+        return true;
+      }
+      return true;
+    });
     artwork(nowArt, t);
-    TextView edit =
-        button(
-            "앨범아트 변경",
-            () -> {
-              if (t != null) artworkMenu(t);
-            });
-    edit.setTextSize(11);
-    edit.setPadding(dp(10), 0, dp(10), 0);
-    edit.setMinHeight(0);
-    edit.setElevation(dp(6));
-    FrameLayout.LayoutParams editPosition =
-        new FrameLayout.LayoutParams(-2, dp(32), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-    editPosition.bottomMargin = dp(4);
-    frame.addView(edit, editPosition);
   }
 
   void buildTransport(LinearLayout parent, Library.Track t) {
     LinearLayout panel = column();
-    panel.setPadding(dp(4), dp(12), dp(4), dp(4));
-    parent.addView(panel);
+    panel.setPadding(dp(4), dp(8), dp(4), dp(12));
+    parent.addView(panel, new LinearLayout.LayoutParams(-1, -2));
     LinearLayout info = row();
     LinearLayout names = column();
     nowTitle = text(t == null ? "음악을 선택하세요" : t.title, 21, ink);
@@ -1392,22 +1389,14 @@ public class MainActivity extends Activity {
               }
             });
     controls.addView(repeatButton, new LinearLayout.LayoutParams(0, dp(56), 1));
-    panel.addView(controls);
+    panel.addView(controls, new LinearLayout.LayoutParams(-1, dp(72)));
   }
 
   void buildLyricsPanel(LinearLayout pane, Library.Track t) {
     pane.setPadding(dp(8), 0, dp(8), 0);
     LinearLayout head = row();
-    lyricLabel = text("가사", 16, muted);
+    lyricLabel = text(tr("가사"), 16, muted);
     head.addView(lyricLabel, new LinearLayout.LayoutParams(0, dp(48), 1));
-    TextView fetch =
-        button(
-            "가져오기",
-            () -> {
-              if (current() != null) autoLyrics(current());
-            });
-    fetch.setTextSize(12);
-    head.addView(fetch);
     head.addView(
         icon(
             "more",
@@ -1435,10 +1424,10 @@ public class MainActivity extends Activity {
             () -> {
               LinearLayout options = row();
               options.addView(
-                  button("− 0.5초", () -> adjustOffset(-500)),
+                  button(tr("− 0.5초"), () -> adjustOffset(-500)),
                   new LinearLayout.LayoutParams(0, dp(52), 1));
               options.addView(
-                  button("＋ 0.5초", () -> adjustOffset(500)),
+                  button(tr("＋ 0.5초"), () -> adjustOffset(500)),
                   new LinearLayout.LayoutParams(0, dp(52), 1));
               new SheetDialog.Builder(this)
                   .setTitle("가사 타이밍")
@@ -1480,20 +1469,27 @@ public class MainActivity extends Activity {
     lines = Lyrics.parse(t == null ? "" : t.lyrics);
     activeLine = -1;
     shownId = t == null ? "" : t.id;
+    lyricContent.setGravity(Gravity.TOP);
     if (t == null || t.lyrics.trim().isEmpty()) {
-      lyricContent.addView(text("가사를 가져오거나\nLRC 파일을 불러오세요.", 20, muted));
+      lyricLabel.setText(tr("가사"));
+      lyricContent.setGravity(Gravity.CENTER);
+      TextView empty = text(tr("가사와 함께 들어보세요"), 18, muted);
+      empty.setGravity(Gravity.CENTER);
+      lyricContent.addView(empty);
+      space(lyricContent, 20);
+      if (t != null) lyricContent.addView(button(tr("가사 가져오기"), () -> autoLyrics(t)));
       return;
     }
     if (lines.isEmpty()) {
-      TextView plain = text(t.lyrics, 20, ink);
+      TextView plain = text(t.lyrics, lyricFontSize(), ink);
       plain.setLineSpacing(dp(8), 1.1f);
       lyricContent.addView(plain);
-      lyricLabel.setText("가사 · 시간 정보 없음");
+      lyricLabel.setText(tr("가사 · 시간 정보 없음"));
       return;
     }
-    lyricLabel.setText("실시간 가사");
+    lyricLabel.setText(tr("실시간 가사"));
     for (Lyrics.Line line : lines) {
-      TextView v = text(line.text.trim().isEmpty() ? "♪" : line.text, expanded() ? 26 : 23, muted);
+      TextView v = text(line.text.trim().isEmpty() ? "♪" : line.text, lyricFontSize(), muted);
       v.setTypeface(null, Typeface.BOLD);
       v.setPadding(0, dp(12), 0, dp(12));
       v.setOnClickListener(
@@ -1570,7 +1566,7 @@ public class MainActivity extends Activity {
   void showQueue() {
     if (player == null) return;
     LinearLayout panel = column();
-    TextView summary = text("곡을 누르면 재생 · 메뉴에서 순서 변경", 12, muted);
+    TextView summary = text(tr("곡을 누르면 재생 · 메뉴에서 순서 변경"), 12, muted);
     summary.setPadding(0, 0, 0, dp(12));
     panel.addView(summary);
     ListView queue = new ListView(this);
@@ -1660,7 +1656,7 @@ public class MainActivity extends Activity {
           }
         };
     queue.setAdapter(queueAdapter);
-    TextView empty = text("대기열이 비어 있습니다", 16, muted);
+    TextView empty = text(tr("대기열이 비어 있습니다"), 16, muted);
     panel.addView(empty);
     queue.setEmptyView(empty);
     SheetDialog dialog =
@@ -1699,7 +1695,7 @@ public class MainActivity extends Activity {
     cover.setScaleType(ImageView.ScaleType.FIT_CENTER);
     artwork(cover, t);
     preview.addView(cover, new LinearLayout.LayoutParams(-1, dp(180)));
-    TextView note = text("보관함에 적용됩니다. 원본 음원 파일은 유지합니다.", 12, muted);
+    TextView note = text(tr("보관함에 적용됩니다. 원본 음원 파일은 유지합니다."), 12, muted);
     note.setGravity(Gravity.CENTER);
     note.setPadding(0, dp(12), 0, dp(8));
     preview.addView(note);
@@ -1965,7 +1961,7 @@ public class MainActivity extends Activity {
         .setTitle("가사")
         .setItems(
             new String[] {
-              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기"
+              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기", "가사 글자 크기"
             },
             (d, w) -> {
               if (w == 0) autoLyrics(t);
@@ -1990,6 +1986,8 @@ public class MainActivity extends Activity {
                     .setPositiveButton("저장", (dd, ww) -> applyLyrics(t, edit.getText().toString()))
                     .setNegativeButton("취소", null)
                     .show();
+              } else if (w == 5) {
+                chooseLyricSize();
               } else {
                 if (t.lyrics.isEmpty()) {
                   toast("저장할 가사가 없습니다");
@@ -2013,16 +2011,16 @@ public class MainActivity extends Activity {
     LinearLayout panel = column();
     panel.setPadding(dp(16), 0, dp(16), 0);
     EditText title = new EditText(this);
-    title.setHint("곡명");
+    title.setHint(tr("곡명"));
     title.setSingleLine();
     title.setText(t.title);
     EditText artist = new EditText(this);
-    artist.setHint("가수 이름");
+    artist.setHint(tr("가수 이름"));
     artist.setSingleLine();
     artist.setText(t.artist.equals("알 수 없는 아티스트") ? "" : t.artist);
     panel.addView(title);
     panel.addView(artist);
-    TextView status = text("Bugs · LRCLIB에서 검색합니다", 12, muted);
+    TextView status = text(tr("Bugs · LRCLIB에서 검색합니다"), 12, muted);
     panel.addView(status);
     ListView results = new ListView(this);
     ArrayList<Lyrics.Result> items = new ArrayList<>();
@@ -2065,7 +2063,7 @@ public class MainActivity extends Activity {
     results.setBackground(shape(card, 14));
     results.setAdapter(a);
     panel.addView(results, new LinearLayout.LayoutParams(-1, dp(280)));
-    TextView more = button("검색", () -> {});
+    TextView more = button(tr("검색"), () -> {});
     panel.addView(more);
     final int[] page = {0}, generation = {0};
     final boolean[] busy = {false}, hasMore = {false};
@@ -2082,8 +2080,8 @@ public class MainActivity extends Activity {
           busy[0] = true;
           int gen = generation[0], p = page[0];
           String q = terms[0], ar = terms[1];
-          status.setText("검색 중…");
-          more.setText("불러오는 중…");
+          status.setText(tr("검색 중…"));
+          more.setText(tr("불러오는 중…"));
           io.execute(
               () -> {
                 Lyrics.Page found = Lyrics.search(q, ar, p);
@@ -2103,7 +2101,7 @@ public class MainActivity extends Activity {
                               + "개 결과"
                               + (found.notice.trim().isEmpty() ? "" : " · " + found.notice));
                       more.setText(
-                          found.more ? "결과 더 불러오기" : items.isEmpty() ? "검색 결과가 없습니다" : "마지막 결과입니다");
+                          tr(found.more ? "결과 더 불러오기" : items.isEmpty() ? "검색 결과가 없습니다" : "마지막 결과입니다"));
                       more.setEnabled(found.more);
                     });
               });
@@ -2120,13 +2118,16 @@ public class MainActivity extends Activity {
               terms[0] = title.getText().toString().trim();
               terms[1] = artist.getText().toString().trim();
               if ((terms[0] + terms[1]).trim().isEmpty()) {
-                status.setText("곡명 또는 가수 이름을 입력하세요");
+                status.setText(tr("곡명 또는 가수 이름을 입력하세요"));
                 return;
               }
               more.setEnabled(true);
               fetch.run();
             });
     panel.addView(search, 2);
+    panel.addView(button(tr("가수로만 검색"), () -> {
+      title.setText(""); search.performClick();
+    }), 3);
     more.setOnClickListener(
         v -> {
           if (hasMore[0]) fetch.run();
@@ -2143,7 +2144,7 @@ public class MainActivity extends Activity {
     results.setOnItemClickListener(
         (p, v, position, id) -> {
           Lyrics.Result selected = items.get(position);
-          status.setText("가사를 불러오는 중…");
+          status.setText(tr("가사를 불러오는 중…"));
           io.execute(
               () -> {
                 try {
@@ -2170,7 +2171,7 @@ public class MainActivity extends Activity {
                       });
                 } catch (Exception e) {
                   toast("이 결과의 가사를 불러오지 못했습니다");
-                  runOnUiThread(() -> status.setText("다른 검색 결과를 선택해 주세요"));
+                  runOnUiThread(() -> status.setText(tr("다른 검색 결과를 선택해 주세요")));
                 }
               });
         });
@@ -2182,7 +2183,7 @@ public class MainActivity extends Activity {
   }
 
   LinearLayout settingsGroup(LinearLayout parent, String title) {
-    TextView label = text(title, 12, muted);
+    TextView label = text(tr(title), 12, muted);
     label.setPadding(dp(14), dp(22), 0, dp(8));
     parent.addView(label);
     LinearLayout group = column();
@@ -2205,10 +2206,10 @@ public class MainActivity extends Activity {
     ImageView image = new ImageView(this);
     image.setImageDrawable(new PlayerGlyph(symbol, accent, dp(22)));
     row.addView(image, new LinearLayout.LayoutParams(dp(24), dp(24)));
-    TextView name = text(title, 15, ink);
+    TextView name = text(tr(title), 15, ink);
     name.setPadding(dp(12), 0, dp(8), 0);
     row.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
-    TextView detail = text(value, 13, muted);
+    TextView detail = text(tr(value), 13, muted);
     detail.setMaxLines(1);
     row.addView(detail);
     TextView chevron = text("  ›", 21, muted);
@@ -2222,6 +2223,34 @@ public class MainActivity extends Activity {
     group.addView(row);
   }
 
+  int lyricFontSize() {
+    return getSharedPreferences("settings", 0).getInt("lyricFontSize", 24);
+  }
+
+  void chooseLyricSize() {
+    int[] sizes = {18, 22, 24, 28, 32, 36};
+    String[] labels = {"18", "22", "24", "28", "32", "36"};
+    int selected = -1;
+    for (int i = 0; i < sizes.length; i++) if (sizes[i] == lyricFontSize()) selected = i;
+    new SheetDialog.Builder(this).setTitle("가사 글자 크기")
+        .setSingleChoiceItems(labels, selected, (d, w) -> {
+          getSharedPreferences("settings", 0).edit().putInt("lyricFontSize", sizes[w]).apply();
+          d.dismiss(); render();
+        }).show();
+  }
+
+  String tr(String source) { return AppLanguage.text(this, source); }
+
+  void chooseLanguage() {
+    String[] codes = {"system", "ko", "en", "ja"};
+    int selected = Arrays.asList(codes).indexOf(getSharedPreferences("settings", 0).getString("language", "system"));
+    new SheetDialog.Builder(this).setTitle("언어")
+        .setSingleChoiceItems(new String[]{tr("기기 설정"), "한국어", "English", "日本語"}, selected, (d, w) -> {
+          getSharedPreferences("settings", 0).edit().putString("language", codes[w]).apply();
+          d.dismiss(); render();
+        }).show();
+  }
+
   void renderSettings() {
     heading(body, "설정", "");
     ScrollView scroll = new ScrollView(this);
@@ -2231,6 +2260,8 @@ public class MainActivity extends Activity {
     body.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
     SharedPreferences prefs = getSharedPreferences("settings", 0);
     LinearLayout appearance = settingsGroup(stack, "화면과 가사");
+    settingRow(appearance, "lyrics", "가사 글자 크기", String.valueOf(lyricFontSize()), this::chooseLyricSize);
+    settingRow(appearance, "album", tr("언어"), getSharedPreferences("settings", 0).getString("language", "system"), this::chooseLanguage);
     String[] modes = {"기기 설정", "라이트", "다크"};
     int selected =
         Arrays.asList("system", "light", "dark").indexOf(prefs.getString("theme", "system"));

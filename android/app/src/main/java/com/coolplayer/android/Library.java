@@ -67,7 +67,25 @@ final class Library {
 
   Library(Context c) {
     context = c.getApplicationContext();
+    boolean fresh = !new File(context.getFilesDir(), "library.json").exists();
     load();
+    if (fresh && !context.getSharedPreferences("settings", 0).getBoolean("sampleAdded", false)) {
+      try {
+        File audio = new File(context.getFilesDir(), "amazing-grace.mp3");
+        try (InputStream in = context.getAssets().open("amazing-grace.mp3"); FileOutputStream out = new FileOutputStream(audio)) {
+          out.write(readBytes(in, 4_000_000));
+        }
+        Track t = new Track();
+        t.id = "cool-player-welcome"; t.uri = Uri.fromFile(audio).toString();
+        t.title = "Amazing Grace"; t.artist = "Rocks From The Garden";
+        t.album = "Live · 2006"; t.format = "MP3"; t.duration = 37000;
+        try (InputStream in = context.getAssets().open("amazing-grace.lrc")) {
+          t.lyrics = new String(readBytes(in, 100_000), StandardCharsets.UTF_8);
+        }
+        tracks.add(t); save();
+        context.getSharedPreferences("settings", 0).edit().putBoolean("sampleAdded", true).apply();
+      } catch (IOException ignored) { }
+    }
   }
 
   synchronized void load() {

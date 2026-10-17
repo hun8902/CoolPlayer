@@ -58,3 +58,28 @@
   window.addEventListener('pagehide', () => { cancelAnimationFrame(pending); pending = 0; });
   update();
 })();
+
+// Play actual recordings only while visible; native controls remain available.
+(() => {
+  const films = [...document.querySelectorAll('video[data-film]')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const visible = new Set();
+  const userPaused = new WeakSet();
+  films.forEach(film => {
+    film.addEventListener('pointerdown', () => { if (!film.paused) userPaused.add(film); else userPaused.delete(film); });
+    film.addEventListener('keydown', () => { if (!film.paused) userPaused.add(film); else userPaused.delete(film); });
+  });
+  function update() {
+    films.forEach(film => {
+      if (document.hidden || !visible.has(film) || reduce.matches) { film.pause(); return; }
+      if (!userPaused.has(film)) film.play().catch(() => {});
+    });
+  }
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => entry.isIntersecting ? visible.add(entry.target) : visible.delete(entry.target));
+    update();
+  }, {threshold: .35});
+  films.forEach(film => observer.observe(film));
+  document.addEventListener('visibilitychange', update);
+  reduce.addEventListener('change', update);
+})();

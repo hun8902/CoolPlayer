@@ -172,6 +172,11 @@ public class MainActivity extends Activity {
                   }
 
                   @Override
+                  public void onEvents(Player source, Player.Events events) {
+                    updatePlayback();
+                  }
+
+                  @Override
                   public void onPlaybackStateChanged(int state) {
                     updatePlayback();
                   }
@@ -386,12 +391,21 @@ public class MainActivity extends Activity {
         new android.graphics.drawable.RippleDrawable(
             android.content.res.ColorStateList.valueOf(0x227788AA), null, shape(Color.WHITE, 24)));
     v.setLayoutParams(new LinearLayout.LayoutParams(dp(48), dp(48)));
-    v.setOnClickListener(w -> action.run());
+    v.setOnClickListener(w -> {
+      w.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+      action.run();
+    });
     return v;
   }
 
   LinearLayout navigation(boolean rail) {
     LinearLayout nav = rail ? column() : row();
+    if (!rail) {
+      nav.setPadding(dp(5), dp(4), dp(5), dp(4));
+      nav.setBackground(shape(darkTheme ? 0xf2252932 : 0xf2ffffff, 30));
+      nav.setElevation(dp(8));
+      nav.setClipToOutline(true);
+    }
     String[] labels = {"곡", "앨범", "즐겨찾기", "목록", "설정"};
     String[] symbols = {"music", "album", "heart", "queue", "settings"};
     for (int i = 0; i < labels.length; i++) {
@@ -407,16 +421,16 @@ public class MainActivity extends Activity {
                 render();
               });
       v.setTextSize(11);
-      v.setPadding(dp(4), dp(10), dp(4), dp(8));
+      v.setPadding(dp(4), dp(5), dp(4), dp(4));
       PlayerGlyph glyph = new PlayerGlyph(symbols[i], tab.equals(label) ? accent : muted, dp(22));
       v.setCompoundDrawablesWithIntrinsicBounds(null, glyph, null, null);
-      v.setCompoundDrawablePadding(dp(6));
+      v.setCompoundDrawablePadding(dp(3));
       if (!tab.equals(label)) v.setBackgroundColor(Color.TRANSPARENT);
       nav.addView(
           v,
           rail
               ? new LinearLayout.LayoutParams(-1, dp(68))
-              : new LinearLayout.LayoutParams(0, dp(64), 1));
+              : new LinearLayout.LayoutParams(0, dp(54), 1));
       if (rail) space(nav, 6);
     }
     return nav;
@@ -435,7 +449,7 @@ public class MainActivity extends Activity {
     previous.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
     previous.setEnabled(false);
     // The host consumes input until the short transition has settled.
-    screenHost.setOnTouchListener((v, event) -> true);
+    screenHost.setOnTouchListener(null);
     ArrayList<android.animation.Animator> animations = new ArrayList<>();
     float height = Math.max(dp(400), screenHost.getHeight());
     if (open) {
@@ -509,7 +523,7 @@ public class MainActivity extends Activity {
           new FrameLayout(this) {
             @Override
             public boolean onInterceptTouchEvent(MotionEvent event) {
-              return screenTransition != null || super.onInterceptTouchEvent(event);
+              return super.onInterceptTouchEvent(event);
             }
           };
       setContentView(screenHost);
@@ -583,7 +597,9 @@ public class MainActivity extends Activity {
     space(root, 12);
     LinearLayout shell = row();
     shell.setGravity(Gravity.TOP);
-    root.addView(shell, new LinearLayout.LayoutParams(-1, 0, 1));
+    FrameLayout libraryViewport = new FrameLayout(this);
+    root.addView(libraryViewport, new LinearLayout.LayoutParams(-1, 0, 1));
+    libraryViewport.addView(shell, new FrameLayout.LayoutParams(-1, -1));
     if (expanded()) {
       shell.addView(navigation(true), new LinearLayout.LayoutParams(dp(76), -1));
       Space gap = new Space(this);
@@ -595,11 +611,19 @@ public class MainActivity extends Activity {
     else if (tab.equals("앨범") && albumFilter.isEmpty()) renderAlbums();
     else if (tab.equals("목록") && playlistFilter.isEmpty()) renderPlaylists();
     else renderLibrary();
-    space(root, 10);
     buildMini();
     if (!expanded()) {
-      space(root, 8);
-      root.addView(navigation(false));
+      root.removeView(mini);
+      LinearLayout dock = column();
+      dock.setPadding(dp(4), dp(8), dp(4), dp(4));
+      dock.addView(mini);
+      space(dock, 6);
+      dock.addView(navigation(false));
+      libraryViewport.addView(dock, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+      if (list != null && list.getParent() == body) {
+        list.setPadding(0, 0, 0, dp(132));
+        list.setClipToPadding(false);
+      } else body.setPadding(0, 0, 0, dp(132));
     }
     updatePlayback();
   }
@@ -618,12 +642,14 @@ public class MainActivity extends Activity {
     input.setHintTextColor(muted);
     input.setHint(tr("곡, 가수, 앨범 검색"));
     input.setText(query);
-    input.setBackground(shape(card, 16));
+    input.setBackground(shape(card, 22));
     input.setPadding(dp(16), 0, dp(12), 0);
-    search.addView(input, new LinearLayout.LayoutParams(0, dp(50), 1));
+    search.addView(input, new LinearLayout.LayoutParams(0, dp(44), 1));
+    Space searchGap = new Space(this);
+    search.addView(searchGap, new LinearLayout.LayoutParams(dp(8), 1));
     search.addView(
-        button(
-            "정렬",
+        icon(
+            "sort", "정렬",
             () ->
                 new SheetDialog.Builder(this)
                     .setItems(
@@ -914,8 +940,9 @@ public class MainActivity extends Activity {
 
   void buildMini() {
     mini = row();
-    mini.setPadding(dp(10), dp(8), dp(6), dp(8));
-    mini.setBackground(shape(card, 20));
+    mini.setPadding(dp(10), dp(3), dp(6), dp(3));
+    mini.setBackground(shape(darkTheme ? 0xf2252932 : 0xf2ffffff, 26));
+    mini.setElevation(dp(6));
     miniArt = new ImageView(this);
     miniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
     miniArt.setBackground(shape(card, 10));
@@ -1166,7 +1193,8 @@ public class MainActivity extends Activity {
     TextView title = text(tr("지금 재생 중"), 13, muted);
     title.setGravity(Gravity.CENTER);
     top.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
-    top.addView(icon("queue", "재생 대기열", this::showQueue));
+    Space topBalance = new Space(this);
+    top.addView(topBalance, new LinearLayout.LayoutParams(dp(48), dp(48)));
     root.addView(top);
     space(root, 8);
     LinearLayout stage = wide ? row() : column();
@@ -1207,22 +1235,6 @@ public class MainActivity extends Activity {
             }
           });
     } else {
-      LinearLayout switcher = row();
-      for (String label : new String[] {"앨범", "가사"}) {
-        boolean lyric = label.equals("가사");
-        TextView v =
-            button(
-                tr(label),
-                () -> {
-                  showPhoneLyrics = lyric;
-                  render();
-                });
-        v.setTextSize(13);
-        if (showPhoneLyrics != lyric) v.setBackgroundColor(Color.TRANSPARENT);
-        switcher.addView(v, new LinearLayout.LayoutParams(0, dp(48), 1));
-      }
-      left.addView(switcher);
-      space(left, 8);
       if (showPhoneLyrics) {
         LinearLayout pane = column();
         left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -1230,6 +1242,18 @@ public class MainActivity extends Activity {
       } else buildArtwork(left, t);
       buildTransport(left, t);
     }
+    LinearLayout tools = row();
+    tools.setGravity(Gravity.CENTER);
+    TextView lyricsToggle = icon("lyrics", tr("가사"), () -> {
+      showPhoneLyrics = !showPhoneLyrics;
+      render();
+    });
+    setIcon(lyricsToggle, "lyrics", (wide || showPhoneLyrics) ? accent : muted, 22);
+    if (wide) lyricsToggle.setOnClickListener(v -> { if (current() != null) lyricsMenu(current()); });
+    tools.addView(lyricsToggle, new LinearLayout.LayoutParams(0, dp(48), 1));
+    tools.addView(icon("more", tr("곡 메뉴"), () -> { if (current() != null) trackMenu(current()); }), new LinearLayout.LayoutParams(0, dp(48), 1));
+    tools.addView(icon("queue", tr("재생 대기열"), this::showQueue), new LinearLayout.LayoutParams(0, dp(48), 1));
+    root.addView(tools);
     updatePlayback();
   }
 
@@ -1312,7 +1336,7 @@ public class MainActivity extends Activity {
                 render();
               }
             });
-    if (t != null && t.favorite) setIcon(favorite, "heart", accent, 24);
+    if (t != null && t.favorite) setIcon(favorite, "heart_filled", accent, 24);
     info.addView(favorite);
     info.addView(
         icon(
@@ -1375,6 +1399,7 @@ public class MainActivity extends Activity {
               if (player != null) {
                 player.setShuffleModeEnabled(!player.getShuffleModeEnabled());
                 updatePlayback();
+                toast(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
               }
             });
     controls.addView(shuffleButton, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -1405,6 +1430,7 @@ public class MainActivity extends Activity {
               if (player != null) {
                 player.setRepeatMode((player.getRepeatMode() + 1) % 3);
                 updatePlayback();
+                toast(player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "한 곡 반복" : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? "전체 반복" : "반복 꺼짐");
               }
             });
     controls.addView(repeatButton, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -1545,6 +1571,8 @@ public class MainActivity extends Activity {
         player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",
         player.getRepeatMode() == Player.REPEAT_MODE_OFF ? muted : accent,
         22);
+    shuffleButton.setBackground(shape(player.getShuffleModeEnabled() ? (darkTheme ? 0xff39465d : 0xffdce6f5) : Color.TRANSPARENT, 22));
+    repeatButton.setBackground(shape(player.getRepeatMode() != Player.REPEAT_MODE_OFF ? (darkTheme ? 0xff39465d : 0xffdce6f5) : Color.TRANSPARENT, 22));
     shuffleButton.setContentDescription(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
     repeatButton.setContentDescription(
         player.getRepeatMode() == Player.REPEAT_MODE_ONE
@@ -1594,7 +1622,7 @@ public class MainActivity extends Activity {
     panel.addView(
         queue,
         new LinearLayout.LayoutParams(
-            -1, dp(Math.min(420, getResources().getConfiguration().screenHeightDp - 240))));
+            -1, 0, 1));
     BaseAdapter queueAdapter =
         new BaseAdapter() {
           public int getCount() {
@@ -1681,7 +1709,7 @@ public class MainActivity extends Activity {
     SheetDialog dialog =
         new SheetDialog.Builder(this)
             .setTitle("재생 대기열")
-            .setView(panel)
+            .setFlexibleView(panel)
             .setNeutralButton(
                 "대기열 비우기",
                 (d, w) ->

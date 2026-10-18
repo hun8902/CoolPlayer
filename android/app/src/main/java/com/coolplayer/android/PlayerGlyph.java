@@ -32,6 +32,11 @@ final class PlayerGlyph extends Drawable {
     canvas.scale(getBounds().width() / 24f, getBounds().height() / 24f);
     paint.setStyle(Paint.Style.STROKE);
     switch (name) {
+      case "sort":
+        line(canvas, 4, 6, 20, 6);
+        line(canvas, 7, 12, 17, 12);
+        line(canvas, 10, 18, 14, 18);
+        break;
       case "download":
         line(canvas, 12, 3, 12, 16);
         line(canvas, 7, 11, 12, 16, 17, 11);
@@ -76,7 +81,9 @@ final class PlayerGlyph extends Drawable {
           canvas.drawText("1", 12, 15, paint);
         }
         break;
+      case "heart_filled":
       case "heart":
+        if (name.equals("heart_filled")) paint.setStyle(Paint.Style.FILL);
         Path p = new Path();
         p.moveTo(12, 20);
         p.cubicTo(0, 12, 2, 4, 7, 4);

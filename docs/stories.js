@@ -46,8 +46,8 @@
  const devices = [...root.querySelectorAll('.comparison-device')];
  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
  let selected = 'phone';
- buttons.forEach(button => button.addEventListener('click', () => {
-   const mode = button.dataset.comparison;
+ function select(mode) {
+   const button = buttons.find(item => item.dataset.comparison === mode);
    if (mode === selected) return;
    const before = devices.map(device => device.getBoundingClientRect());
    devices.forEach(device => device.getAnimations().forEach(animation => animation.cancel()));
@@ -71,7 +71,21 @@
      images[index].animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],
        {duration:720,easing:'ease-in-out'});
    });
- }));
+ }
+ let scrollMode = null, pending = false;
+ buttons.forEach(button => button.addEventListener('click', () => select(button.dataset.comparison)));
+ function updateScroll() {
+   pending = false;
+   // A stable anchor avoids feedback when the device height changes.
+   const top = root.getBoundingClientRect().top;
+   const next = top < innerHeight * .38 ? 'wide' : 'phone';
+   if (next !== scrollMode) { scrollMode = next; select(next); }
+ }
+ addEventListener('scroll', () => {
+   if (!pending) { pending = true; requestAnimationFrame(updateScroll); }
+ }, {passive:true});
+ addEventListener('resize', updateScroll, {passive:true});
+ updateScroll();
 })();
 
 (() => {

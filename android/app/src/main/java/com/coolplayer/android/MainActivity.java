@@ -616,18 +616,21 @@ public class MainActivity extends Activity {
     else if (tab.equals("목록") && playlistFilter.isEmpty()) renderPlaylists();
     else renderLibrary();
     buildMini();
-    if (!expanded()) {
+    {
       root.removeView(mini);
       LinearLayout dock = column();
       dock.setPadding(dp(4), dp(8), dp(4), dp(4));
       dock.addView(mini);
-      space(dock, 6);
-      dock.addView(navigation(false));
+      if (!expanded()) {
+        space(dock, 6);
+        dock.addView(navigation(false));
+      }
       libraryViewport.addView(dock, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+      int dockSpace = dp(expanded() ? 84 : 140);
       if (list != null && list.getParent() == body) {
-        list.setPadding(0, 0, 0, dp(132));
+        list.setPadding(0, 0, 0, dockSpace);
         list.setClipToPadding(false);
-      } else body.setPadding(0, 0, 0, dp(132));
+      } else body.setPadding(0, 0, 0, dockSpace);
     }
     updatePlayback();
   }
@@ -638,25 +641,6 @@ public class MainActivity extends Activity {
             ? albumFilter
             : !playlistFilter.isEmpty() ? playlistFilter : tab.equals("곡") ? "나의 음악" : tab;
     heading(body, name, library.tracks.size() + "곡");
-    LinearLayout playbackActions = row();
-    TextView playAll = button("재생", () -> {
-      if (player != null) player.setShuffleModeEnabled(false);
-      play(new ArrayList<>(visible), 0);
-    });
-    TextView shuffleAll = button("셔플 재생", () -> {
-      if (player == null || visible.isEmpty()) return;
-      ArrayList<Library.Track> selection = new ArrayList<>(visible);
-      player.setShuffleModeEnabled(true);
-      play(selection, new java.security.SecureRandom().nextInt(selection.size()));
-    });
-    playAll.setCompoundDrawablesWithIntrinsicBounds(new PlayerGlyph("play", accent, dp(18)), null, null, null);
-    shuffleAll.setCompoundDrawablesWithIntrinsicBounds(new PlayerGlyph("shuffle", accent, dp(18)), null, null, null);
-    LinearLayout.LayoutParams actionSize = new LinearLayout.LayoutParams(0, dp(48), 1);
-    actionSize.rightMargin = dp(8);
-    playbackActions.addView(playAll, actionSize);
-    playbackActions.addView(shuffleAll, new LinearLayout.LayoutParams(0, dp(48), 1));
-    body.addView(playbackActions);
-    space(body, 10);
     LinearLayout search = row();
     EditText input = new EditText(this);
     input.setSingleLine(true);

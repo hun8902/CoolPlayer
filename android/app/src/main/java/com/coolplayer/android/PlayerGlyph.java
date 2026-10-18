@@ -75,7 +75,7 @@ final class PlayerGlyph extends Drawable {
       case "shuffle":
         if (name.equals("shuffle_on")) {
           paint.setStyle(Paint.Style.FILL);
-          canvas.drawCircle(12, 22, 1.7f, paint);
+          canvas.drawCircle(12, 22, 2f, paint);
           paint.setStyle(Paint.Style.STROKE);
           paint.setStrokeWidth(2.5f);
         }
@@ -85,8 +85,15 @@ final class PlayerGlyph extends Drawable {
         line(canvas, 14, 10, 18, 6, 21, 6);
         line(canvas, 17, 2, 21, 6, 17, 10);
         break;
+      case "repeat_all":
       case "repeat_one":
       case "repeat":
+        if (!name.equals("repeat")) {
+          paint.setStyle(Paint.Style.FILL);
+          canvas.drawCircle(12, 22, 2f, paint);
+          paint.setStyle(Paint.Style.STROKE);
+          paint.setStrokeWidth(2.5f);
+        }
         line(canvas, 4, 10, 4, 6, 20, 6, 17, 3);
         line(canvas, 20, 14, 20, 18, 4, 18, 7, 21);
         if (name.equals("repeat_one")) {

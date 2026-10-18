@@ -638,6 +638,25 @@ public class MainActivity extends Activity {
             ? albumFilter
             : !playlistFilter.isEmpty() ? playlistFilter : tab.equals("곡") ? "나의 음악" : tab;
     heading(body, name, library.tracks.size() + "곡");
+    LinearLayout playbackActions = row();
+    TextView playAll = button("재생", () -> {
+      if (player != null) player.setShuffleModeEnabled(false);
+      play(new ArrayList<>(visible), 0);
+    });
+    TextView shuffleAll = button("셔플 재생", () -> {
+      if (player == null || visible.isEmpty()) return;
+      ArrayList<Library.Track> selection = new ArrayList<>(visible);
+      player.setShuffleModeEnabled(true);
+      play(selection, new java.security.SecureRandom().nextInt(selection.size()));
+    });
+    playAll.setCompoundDrawablesWithIntrinsicBounds(new PlayerGlyph("play", accent, dp(18)), null, null, null);
+    shuffleAll.setCompoundDrawablesWithIntrinsicBounds(new PlayerGlyph("shuffle", accent, dp(18)), null, null, null);
+    LinearLayout.LayoutParams actionSize = new LinearLayout.LayoutParams(0, dp(48), 1);
+    actionSize.rightMargin = dp(8);
+    playbackActions.addView(playAll, actionSize);
+    playbackActions.addView(shuffleAll, new LinearLayout.LayoutParams(0, dp(48), 1));
+    body.addView(playbackActions);
+    space(body, 10);
     LinearLayout search = row();
     EditText input = new EditText(this);
     input.setSingleLine(true);
@@ -1408,7 +1427,7 @@ public class MainActivity extends Activity {
               if (player != null) {
                 player.setShuffleModeEnabled(!player.getShuffleModeEnabled());
                 updatePlayback();
-                toast(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
+
               }
             });
     controls.addView(shuffleButton, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -1437,9 +1456,8 @@ public class MainActivity extends Activity {
             "반복",
             () -> {
               if (player != null) {
-                player.setRepeatMode((player.getRepeatMode() + 1) % 3);
+                player.setRepeatMode(player.getRepeatMode() == Player.REPEAT_MODE_OFF ? Player.REPEAT_MODE_ALL : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? Player.REPEAT_MODE_ONE : Player.REPEAT_MODE_OFF);
                 updatePlayback();
-                toast(player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "한 곡 반복" : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? "전체 반복" : "반복 꺼짐");
               }
             });
     controls.addView(repeatButton, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -1569,13 +1587,15 @@ public class MainActivity extends Activity {
     if (!now || timeline == null) return;
     if (t != null && !t.id.equals(shownId)) loadLyrics(t);
     setIcon(playButton, playing ? "pause" : "play", bg, 30);
-    setIcon(shuffleButton, player.getShuffleModeEnabled() ? "shuffle_on" : "shuffle", player.getShuffleModeEnabled() ? accent : muted, 22);
+    setIcon(shuffleButton, player.getShuffleModeEnabled() ? "shuffle_on" : "shuffle", player.getShuffleModeEnabled() ? ink : muted, 26);
+    shuffleButton.setAlpha(player.getShuffleModeEnabled() ? 1f : .48f);
     shuffleButton.setSelected(player.getShuffleModeEnabled());
     setIcon(
         repeatButton,
-        player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",
-        player.getRepeatMode() == Player.REPEAT_MODE_OFF ? muted : accent,
-        22);
+        player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? "repeat_all" : "repeat",
+        player.getRepeatMode() == Player.REPEAT_MODE_OFF ? muted : ink,
+        26);
+    repeatButton.setAlpha(player.getRepeatMode() == Player.REPEAT_MODE_OFF ? .48f : 1f);
     shuffleButton.setContentDescription(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
     repeatButton.setContentDescription(
         player.getRepeatMode() == Player.REPEAT_MODE_ONE

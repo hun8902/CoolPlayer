@@ -71,7 +71,14 @@ final class PlayerGlyph extends Drawable {
         paint.setStyle(Paint.Style.STROKE);
         line(canvas, 6, 5, 6, 19);
         break;
+      case "shuffle_on":
       case "shuffle":
+        if (name.equals("shuffle_on")) {
+          paint.setStyle(Paint.Style.FILL);
+          canvas.drawCircle(12, 22, 1.7f, paint);
+          paint.setStyle(Paint.Style.STROKE);
+          paint.setStrokeWidth(2.5f);
+        }
         line(canvas, 3, 6, 6, 6, 18, 18, 21, 18);
         line(canvas, 17, 14, 21, 18, 17, 22);
         line(canvas, 3, 18, 6, 18, 10, 14);

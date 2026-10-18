@@ -441,14 +441,14 @@ public class MainActivity extends Activity {
     final LinearLayout incoming = root;
     boolean open = now && !wasNow,
         close = !now && wasNow,
-        change = !tab.equals(wasTab) || showPhoneLyrics != wasLyrics;
+        change = !tab.equals(wasTab) || showPhoneLyrics != wasLyrics || tab.equals("설정");
     if (!android.animation.ValueAnimator.areAnimatorsEnabled() || (!open && !close && !change)) {
       screenHost.removeView(previous);
       return;
     }
     previous.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
     previous.setEnabled(false);
-    // The host consumes input until the short transition has settled.
+    // Keep the controls responsive during the transition.
     screenHost.setOnTouchListener(null);
     ArrayList<android.animation.Animator> animations = new ArrayList<>();
     float height = Math.max(dp(400), screenHost.getHeight());
@@ -478,7 +478,7 @@ public class MainActivity extends Activity {
     android.animation.AnimatorSet animation = new android.animation.AnimatorSet();
     screenTransition = animation;
     animation.playTogether(animations);
-    animation.setDuration(open || close ? 360 : 220);
+    animation.setDuration(open || close ? 420 : 280);
     animation.setInterpolator(new android.view.animation.PathInterpolator(.22f, .75f, .18f, 1));
     animation.addListener(
         new android.animation.AnimatorListenerAdapter() {
@@ -512,7 +512,8 @@ public class MainActivity extends Activity {
       backdrop = null;
     }
     root = column();
-    root.setPadding(dp(20), dp(32), dp(20), dp(12));
+    if (previous != null) root.setPadding(previous.getPaddingLeft(), previous.getPaddingTop(), previous.getPaddingRight(), previous.getPaddingBottom());
+    else root.setPadding(dp(20), dp(32), dp(20), dp(20));
     root.setBackgroundColor(bg);
     if (now) {
       backdrop = new ArtworkBackdrop(darkTheme, wasNow ? previousBackdrop : null);
@@ -542,7 +543,10 @@ public class MainActivity extends Activity {
     renderedNow = now;
     renderedTab = tab;
     renderedLyrics = showPhoneLyrics;
-    transitionScreen(previous, wasNow, wasTab, wasLyrics);
+    LinearLayout target = root;
+    root.post(() -> {
+      if (root == target && !destroyed) transitionScreen(previous, wasNow, wasTab, wasLyrics);
+    });
     if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
     screenHost.setOnApplyWindowInsetsListener(
         (v, insets) -> {
@@ -567,7 +571,7 @@ public class MainActivity extends Activity {
               left + dp(expanded() ? 24 : 16),
               top + dp(8),
               right + dp(expanded() ? 24 : 16),
-              bottom + dp(8));
+              bottom + dp(12));
           return Build.VERSION.SDK_INT >= 30
               ? WindowInsets.CONSUMED
               : insets.consumeSystemWindowInsets();
@@ -980,7 +984,8 @@ public class MainActivity extends Activity {
             () -> {
               if (player != null) player.seekToNextMediaItem();
             }));
-    root.addView(mini);
+    root.addView(mini, new LinearLayout.LayoutParams(-1, dp(64)));
+    mini.setMinimumHeight(dp(64));
   }
 
   Library.Track current() {
@@ -1564,7 +1569,8 @@ public class MainActivity extends Activity {
     if (!now || timeline == null) return;
     if (t != null && !t.id.equals(shownId)) loadLyrics(t);
     setIcon(playButton, playing ? "pause" : "play", bg, 30);
-    setIcon(shuffleButton, "shuffle", player.getShuffleModeEnabled() ? accent : muted, 22);
+    setIcon(shuffleButton, player.getShuffleModeEnabled() ? "shuffle_on" : "shuffle", player.getShuffleModeEnabled() ? accent : muted, 22);
+    shuffleButton.setSelected(player.getShuffleModeEnabled());
     setIcon(
         repeatButton,
         player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",

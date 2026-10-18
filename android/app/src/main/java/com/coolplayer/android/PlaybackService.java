@@ -54,6 +54,11 @@ public class PlaybackService extends MediaSessionService {
     player.addListener(
         new Player.Listener() {
           @Override
+          public void onShuffleModeEnabledChanged(boolean enabled) {
+            if (enabled) player.setShuffleOrder(new androidx.media3.exoplayer.source.ShuffleOrder.DefaultShuffleOrder(player.getMediaItemCount()));
+          }
+
+          @Override
           public void onAudioSessionIdChanged(int id) {
             getSharedPreferences("playback", 0).edit().putInt("audioSession", id).apply();
           }

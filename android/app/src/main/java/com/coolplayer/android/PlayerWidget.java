@@ -24,7 +24,9 @@ public class PlayerWidget extends AppWidgetProvider {
         artist = c.getSharedPreferences("playback", 0).getString("artist", "음악을 선택하세요");
     v.setTextViewText(R.id.widget_title, title);
     v.setTextViewText(R.id.widget_artist, artist);
-    v.setTextViewText(R.id.widget_play, player != null && player.isPlaying() ? "Ⅱ" : "▶");
+    widgetIcon(v, R.id.widget_play, player != null && player.isPlaying() ? "pause" : "play");
+    widgetIcon(v, R.id.widget_previous, "previous");
+    widgetIcon(v, R.id.widget_next, "next");
     v.setImageViewResource(R.id.widget_art, R.drawable.brand);
     if (player != null && player.getMediaMetadata().artworkUri != null) {
       BitmapFactory.Options options = new BitmapFactory.Options();
@@ -50,6 +52,14 @@ public class PlayerWidget extends AppWidgetProvider {
               c, i + 10, in, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
     m.updateAppWidget(ids, v);
+  }
+
+  static void widgetIcon(RemoteViews views, int id, String name) {
+    Bitmap bitmap = Bitmap.createBitmap(72, 72, Bitmap.Config.ARGB_8888);
+    PlayerGlyph glyph = new PlayerGlyph(name, 0xff263142, 72);
+    glyph.setBounds(0, 0, 72, 72);
+    glyph.draw(new Canvas(bitmap));
+    views.setImageViewBitmap(id, bitmap);
   }
 
   @Override

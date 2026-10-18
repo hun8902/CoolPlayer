@@ -7,8 +7,8 @@
         </LinearLayout>
     </LinearLayout>
     <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center">
-        <Button android:id="@+id/widget_previous" android:layout_width="64dp" android:layout_height="48dp" android:text="|◀" android:contentDescription="이전 곡"/>
-        <Button android:id="@+id/widget_play" android:layout_width="80dp" android:layout_height="48dp" android:text="▶" android:contentDescription="재생 또는 일시정지"/>
-        <Button android:id="@+id/widget_next" android:layout_width="64dp" android:layout_height="48dp" android:text="▶|" android:contentDescription="다음 곡"/>
+        <ImageView android:id="@+id/widget_previous" android:layout_width="64dp" android:layout_height="48dp" android:padding="12dp" android:contentDescription="이전 곡"/>
+        <ImageView android:id="@+id/widget_play" android:layout_width="80dp" android:layout_height="48dp" android:padding="10dp" android:contentDescription="재생 또는 일시정지"/>
+        <ImageView android:id="@+id/widget_next" android:layout_width="64dp" android:layout_height="48dp" android:padding="12dp" android:contentDescription="다음 곡"/>
     </LinearLayout>
 </LinearLayout>

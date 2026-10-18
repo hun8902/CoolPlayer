@@ -1211,7 +1211,8 @@ public class MainActivity extends Activity {
       stage.addView(right, new LinearLayout.LayoutParams(0, -1, 1));
       buildArtwork(left, t);
       buildTransport(left, t);
-      buildLyricsPanel(right, t);
+      if (showPhoneLyrics) buildLyricsPanel(right, t);
+      else buildInlineQueue(right);
       stage.addOnLayoutChangeListener(
           (v, l, tp, r, b, ol, ot, or, ob) -> {
             if (foldBounds.width() == 0 && foldBounds.height() == 0) return;
@@ -1239,7 +1240,11 @@ public class MainActivity extends Activity {
         LinearLayout pane = column();
         left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
         buildLyricsPanel(pane, t);
-      } else buildArtwork(left, t);
+      } else {
+        LinearLayout pane = column();
+        left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
+        buildInlineQueue(pane);
+      }
       buildTransport(left, t);
     }
     LinearLayout tools = row();
@@ -1248,10 +1253,9 @@ public class MainActivity extends Activity {
       showPhoneLyrics = !showPhoneLyrics;
       render();
     });
-    setIcon(lyricsToggle, "lyrics", (wide || showPhoneLyrics) ? accent : muted, 22);
-    if (wide) lyricsToggle.setOnClickListener(v -> { if (current() != null) lyricsMenu(current()); });
+    setIcon(lyricsToggle, "lyrics", showPhoneLyrics ? accent : muted, 22);
     tools.addView(lyricsToggle, new LinearLayout.LayoutParams(0, dp(48), 1));
-    tools.addView(icon("more", tr("곡 메뉴"), () -> { if (current() != null) trackMenu(current()); }), new LinearLayout.LayoutParams(0, dp(48), 1));
+    tools.addView(icon("more", tr("가사"), () -> { if (current() != null) lyricsMenu(current()); }), new LinearLayout.LayoutParams(0, dp(48), 1));
     tools.addView(icon("queue", tr("재생 대기열"), this::showQueue), new LinearLayout.LayoutParams(0, dp(48), 1));
     root.addView(tools);
     updatePlayback();
@@ -1441,7 +1445,7 @@ public class MainActivity extends Activity {
     pane.setPadding(dp(8), 0, dp(8), 0);
     LinearLayout head = row();
     lyricLabel = text(tr("가사"), 16, muted);
-    head.addView(lyricLabel, new LinearLayout.LayoutParams(0, dp(48), 1));
+    head.addView(new Space(this), new LinearLayout.LayoutParams(0, dp(36), 1));
     head.addView(
         icon(
             "more",
@@ -1463,10 +1467,9 @@ public class MainActivity extends Activity {
     lyricScroll.addView(lyricContent);
     pane.addView(lyricScroll, new LinearLayout.LayoutParams(-1, 0, 1));
     loadLyrics(t);
-    TextView timing =
-        button(
-            "가사 타이밍 조절",
-            () -> {
+  }
+
+  void showLyricTiming() {
               LinearLayout options = row();
               options.addView(
                   button(tr("− 0.5초"), () -> adjustOffset(-500)),
@@ -1491,10 +1494,6 @@ public class MainActivity extends Activity {
                       })
                   .setPositiveButton("닫기", null)
                   .show();
-            });
-    timing.setTextSize(11);
-    timing.setBackgroundColor(Color.TRANSPARENT);
-    pane.addView(timing, new LinearLayout.LayoutParams(-1, dp(44)));
   }
 
   void adjustOffset(int delta) {
@@ -1571,8 +1570,6 @@ public class MainActivity extends Activity {
         player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : "repeat",
         player.getRepeatMode() == Player.REPEAT_MODE_OFF ? muted : accent,
         22);
-    shuffleButton.setBackground(shape(player.getShuffleModeEnabled() ? (darkTheme ? 0xff39465d : 0xffdce6f5) : Color.TRANSPARENT, 22));
-    repeatButton.setBackground(shape(player.getRepeatMode() != Player.REPEAT_MODE_OFF ? (darkTheme ? 0xff39465d : 0xffdce6f5) : Color.TRANSPARENT, 22));
     shuffleButton.setContentDescription(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
     repeatButton.setContentDescription(
         player.getRepeatMode() == Player.REPEAT_MODE_ONE
@@ -1608,6 +1605,50 @@ public class MainActivity extends Activity {
                     0, Math.max(0, line.getTop() - lyricScroll.getHeight() / 3)));
       }
     }
+  }
+
+  void buildInlineQueue(LinearLayout parent) {
+    TextView heading = text(tr("재생 대기열"), 16, ink);
+    heading.setPadding(dp(8), dp(8), 0, dp(12));
+    parent.addView(heading);
+    ListView queue = new ListView(this);
+    queue.setDivider(null);
+    queue.setVerticalScrollBarEnabled(false);
+    BaseAdapter items = new BaseAdapter() {
+      public int getCount() { return player == null ? 0 : player.getMediaItemCount(); }
+      public Object getItem(int p) { return player.getMediaItemAt(p); }
+      public long getItemId(int p) { return p; }
+      public View getView(int p, View old, ViewGroup container) {
+        MediaItem item = player.getMediaItemAt(p);
+        LinearLayout entry = row();
+        entry.setPadding(dp(8), dp(8), dp(4), dp(8));
+        ImageView art = new ImageView(MainActivity.this);
+        art.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        art.setBackground(shape(card, 8)); art.setClipToOutline(true);
+        artwork(art, library.find(item.mediaId));
+        entry.addView(art, new LinearLayout.LayoutParams(dp(42), dp(42)));
+        LinearLayout names = column(); names.setPadding(dp(12), 0, 0, 0);
+        TextView title = text(String.valueOf(item.mediaMetadata.title), 15,
+          p == player.getCurrentMediaItemIndex() ? accent : ink);
+        title.setSingleLine(); title.setEllipsize(TextUtils.TruncateAt.END);
+        TextView artist = text(String.valueOf(item.mediaMetadata.artist), 12, muted);
+        artist.setSingleLine(); artist.setEllipsize(TextUtils.TruncateAt.END);
+        names.addView(title); names.addView(artist);
+        entry.addView(names, new LinearLayout.LayoutParams(0, -2, 1));
+        entry.setOnClickListener(v -> { player.seekTo(p, 0); player.play(); });
+        return entry;
+      }
+    };
+    queue.setAdapter(items);
+    parent.addView(queue, new LinearLayout.LayoutParams(-1, 0, 1));
+    Player.Listener listener = new Player.Listener() {
+      public void onEvents(Player source, Player.Events events) { items.notifyDataSetChanged(); }
+    };
+    queue.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+      public void onViewAttachedToWindow(View v) { if (player != null) player.addListener(listener); }
+      public void onViewDetachedFromWindow(View v) { if (player != null) player.removeListener(listener); }
+    });
+    queue.setSelection(player == null ? 0 : Math.max(0, player.getCurrentMediaItemIndex()));
   }
 
   void showQueue() {
@@ -2008,7 +2049,7 @@ public class MainActivity extends Activity {
         .setTitle("가사")
         .setItems(
             new String[] {
-              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기", "가사 글자 크기"
+              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기", "가사 글자 크기", "가사 타이밍 조절"
             },
             (d, w) -> {
               if (w == 0) autoLyrics(t);
@@ -2033,6 +2074,8 @@ public class MainActivity extends Activity {
                     .setPositiveButton("저장", (dd, ww) -> applyLyrics(t, edit.getText().toString()))
                     .setNegativeButton("취소", null)
                     .show();
+              } else if (w == 6) {
+                showLyricTiming();
               } else if (w == 5) {
                 chooseLyricSize();
               } else {

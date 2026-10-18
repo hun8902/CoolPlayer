@@ -36,3 +36,6 @@
 .conversion-workflow{background:#e9e7f0}
 .platform-downloads{background:#f5f7fa;box-shadow:0 0 0 100vmax #f5f7fa;clip-path:inset(0 -100vmax);border-top:1px solid #e0e5ed}
 @media(max-width:700px){.journey-stage{box-shadow:0 12px 18px #f2f5f2}.music-comparison{margin-top:24px;margin-bottom:24px}}
+
+/* Keep screenshots proportional while the device frame opens and closes. */
+.comparison-device{position:relative;transform-origin:center;will-change:width,height}.comparison-device img{max-width:none;object-position:center}.comparison-device{aspect-ratio:1248/1862}.comparison-view.is-wide .comparison-device{aspect-ratio:2448/1701}.comparison-device img,.comparison-view.is-wide .comparison-device img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}

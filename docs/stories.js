@@ -63,13 +63,13 @@
    devices.forEach((device, index) => {
      const after = device.getBoundingClientRect();
      const previous = before[index];
-     const direction = index === 0 ? 1 : -1;
+     // Animate the frame dimensions; never stretch or rotate the screenshot.
      device.animate([
-       {transform: `translate(${previous.left - after.left}px, ${previous.top - after.top}px) scale(${previous.width / after.width}, ${previous.height / after.height})`, filter:'brightness(.92)'},
-       {transform: `perspective(1200px) rotateY(${direction * (mode === 'wide' ? 16 : -16)}deg) scale(.96, 1)`, filter:'brightness(.96)', offset:.55},
-       {transform:'none', filter:'brightness(1)'}
-     ], {duration:650, easing:'cubic-bezier(.22,1,.36,1)'});
-     images[index].animate([{opacity:.25},{opacity:1}], {duration:500,easing:'ease-out'});
+       {width: `${previous.width}px`, height: `${previous.height}px`},
+       {width: `${after.width}px`, height: `${after.height}px`}
+     ], {duration:720, easing:'cubic-bezier(.4,0,.2,1)'});
+     images[index].animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],
+       {duration:720,easing:'ease-in-out'});
    });
  }));
 })();

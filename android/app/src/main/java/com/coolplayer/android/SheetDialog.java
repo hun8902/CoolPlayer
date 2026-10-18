@@ -33,7 +33,8 @@ final class SheetDialog extends Dialog {
             super.onMeasure(
                 w,
                 MeasureSpec.makeMeasureSpec(
-                    Math.min(MeasureSpec.getSize(h), maximum), MeasureSpec.AT_MOST));
+                    Math.min(MeasureSpec.getSize(h), maximum),
+                    spec.flexible ? MeasureSpec.EXACTLY : MeasureSpec.AT_MOST));
           }
         };
     surface.setOrientation(LinearLayout.VERTICAL);
@@ -69,7 +70,7 @@ final class SheetDialog extends Dialog {
     scroll.setVerticalScrollBarEnabled(false);
     LinearLayout content = a.column();
     scroll.addView(content);
-    surface.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
+    if (!spec.flexible) surface.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
     if (spec.message != null) {
       TextView message = a.text(spec.message, 15, a.muted);
       message.setLineSpacing(a.dp(5), 1.1f);
@@ -115,7 +116,8 @@ final class SheetDialog extends Dialog {
       if (spec.view.getParent() instanceof android.view.ViewGroup)
         ((android.view.ViewGroup) spec.view.getParent()).removeView(spec.view);
       style(spec.view);
-      content.addView(spec.view, 0);
+      if (spec.flexible) surface.addView(spec.view, new LinearLayout.LayoutParams(-1, 0, 1));
+      else content.addView(spec.view, 0);
     }
     LinearLayout buttons = a.column();
     for (Action action : spec.actions) {
@@ -175,7 +177,8 @@ final class SheetDialog extends Dialog {
     if (w != null) {
       w.setLayout(
           a.expanded() ? a.dp(520) : WindowManager.LayoutParams.MATCH_PARENT,
-          WindowManager.LayoutParams.WRAP_CONTENT);
+          spec.flexible ? (int) (a.getResources().getDisplayMetrics().heightPixels * .86)
+              : WindowManager.LayoutParams.WRAP_CONTENT);
       if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
         View content = w.getDecorView();
         content.setTranslationY(a.dp(28));
@@ -208,7 +211,7 @@ final class SheetDialog extends Dialog {
     String title, message;
     View view;
     String[] items;
-    boolean single;
+    boolean single, flexible;
     int selected = -1;
     DialogInterface.OnClickListener select;
     final ArrayList<Action> actions = new ArrayList<>();
@@ -229,6 +232,12 @@ final class SheetDialog extends Dialog {
 
     Builder setView(View v) {
       view = v;
+      return this;
+    }
+
+    Builder setFlexibleView(View v) {
+      view = v;
+      flexible = true;
       return this;
     }
 

@@ -863,33 +863,52 @@ public class MainActivity extends Activity {
     LinearLayout items = column();
     s.addView(items);
     body.addView(s, new LinearLayout.LayoutParams(-1, 0, 1));
+    if (library.playlists.isEmpty()) {
+      TextView empty = text(tr("새 재생목록을 만들고 좋아하는 곡을 담아보세요."), 14, muted);
+      empty.setPadding(dp(8), dp(24), dp(8), dp(24));
+      items.addView(empty);
+    }
     for (String name : library.playlists.keySet()) {
-      TextView b =
-          button(
-              name + "   ·   " + library.playlists.get(name).size() + "곡",
-              () -> {
-                playlistFilter = name;
-                render();
-              });
-      b.setGravity(Gravity.CENTER_VERTICAL);
-      b.setOnLongClickListener(
-          v -> {
-            new SheetDialog.Builder(this)
-                .setTitle(name)
+      ArrayList<String> tracks = library.playlists.get(name);
+      LinearLayout entry = row();
+      entry.setPadding(dp(12), dp(12), dp(4), dp(12));
+      ImageView cover = new ImageView(this);
+      cover.setScaleType(ImageView.ScaleType.CENTER_CROP);
+      cover.setBackground(shape(card, 12));
+      cover.setClipToOutline(true);
+      artwork(cover, tracks.isEmpty() ? null : library.find(tracks.get(0)));
+      entry.addView(cover, new LinearLayout.LayoutParams(dp(54), dp(54)));
+      LinearLayout labels = column();
+      labels.setPadding(dp(14), 0, dp(8), 0);
+      TextView title = text(name, 16, ink);
+      title.setTypeface(null, Typeface.BOLD);
+      title.setSingleLine(); title.setEllipsize(TextUtils.TruncateAt.END);
+      labels.addView(title);
+      TextView count = text(tracks.size() + tr("곡"), 12, muted);
+      count.setPadding(0, dp(5), 0, 0);
+      labels.addView(count);
+      entry.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
+      entry.setBackground(new android.graphics.drawable.RippleDrawable(
+          android.content.res.ColorStateList.valueOf(0x227788aa), null, shape(android.graphics.Color.WHITE, 14)));
+      entry.setOnClickListener(v -> { playlistFilter = name; render(); });
+      Runnable menu = () -> new SheetDialog.Builder(this)
+          .setTitle(name)
+          .setItems(new String[]{"재생목록 열기", "삭제"}, (dialog, which) -> {
+            if (which == 0) { playlistFilter = name; render(); return; }
+            new SheetDialog.Builder(this).setTitle(name)
                 .setMessage("이 재생목록을 삭제할까요? 음원 파일은 보존됩니다.")
-                .setPositiveButton(
-                    "삭제",
-                    (d, w) -> {
-                      library.playlists.remove(name);
-                      library.save();
-                      render();
-                    })
-                .setNegativeButton("취소", null)
-                .show();
-            return true;
-          });
-      items.addView(b);
-      space(items, 8);
+                .setPositiveButton("삭제", (d, w) -> {
+                  library.playlists.remove(name); library.save(); render();
+                }).setNegativeButton("취소", null).show();
+          }).show();
+      entry.addView(icon("more", "재생목록 메뉴", menu));
+      entry.setOnLongClickListener(v -> { menu.run(); return true; });
+      items.addView(entry);
+      View divider = new View(this);
+      divider.setBackgroundColor(darkTheme ? 0xff303640 : 0xffe3e7ed);
+      LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, dp(1));
+      line.leftMargin = dp(80);
+      items.addView(divider, line);
     }
   }
 
@@ -1200,7 +1219,7 @@ public class MainActivity extends Activity {
                 });
         v.setTextSize(13);
         if (showPhoneLyrics != lyric) v.setBackgroundColor(Color.TRANSPARENT);
-        switcher.addView(v, new LinearLayout.LayoutParams(0, dp(44), 1));
+        switcher.addView(v, new LinearLayout.LayoutParams(0, dp(48), 1));
       }
       left.addView(switcher);
       space(left, 8);
@@ -2009,7 +2028,7 @@ public class MainActivity extends Activity {
 
   void searchLyrics(Library.Track t) {
     LinearLayout panel = column();
-    panel.setPadding(dp(16), 0, dp(16), 0);
+    panel.setPadding(0, 0, 0, 0);
     EditText title = new EditText(this);
     title.setHint(tr("곡명"));
     title.setSingleLine();
@@ -2018,9 +2037,15 @@ public class MainActivity extends Activity {
     artist.setHint(tr("가수 이름"));
     artist.setSingleLine();
     artist.setText(t.artist.equals("알 수 없는 아티스트") ? "" : t.artist);
-    panel.addView(title);
-    panel.addView(artist);
-    TextView status = text(tr("Bugs · LRCLIB에서 검색합니다"), 12, muted);
+    LinearLayout fields = row();
+    LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+    titleParams.rightMargin = dp(8);
+    fields.addView(title, titleParams);
+    fields.addView(artist, new LinearLayout.LayoutParams(0, dp(48), 1));
+    panel.addView(fields);
+    space(panel, 10);
+    TextView status = text(tr("곡명 또는 가수 이름으로 검색하세요"), 12, muted);
+    status.setPadding(dp(4), dp(12), dp(4), dp(12));
     panel.addView(status);
     ListView results = new ListView(this);
     ArrayList<Lyrics.Result> items = new ArrayList<>();
@@ -2045,11 +2070,14 @@ public class MainActivity extends Activity {
             TextView name = text(result.title, 16, ink);
             name.setMaxLines(2);
             name.setTypeface(null, Typeface.BOLD);
+            name.setEllipsize(TextUtils.TruncateAt.END);
             entry.addView(name);
-            TextView artistText = text(result.artist + " · " + result.source, 12, muted);
+            TextView artistText = text(result.artist, 13, muted);
+            artistText.setSingleLine();
+            artistText.setEllipsize(TextUtils.TruncateAt.END);
             artistText.setPadding(0, dp(6), 0, 0);
             entry.addView(artistText);
-            if (!result.album.isEmpty()) {
+            if (!result.album.isEmpty() && !result.album.equalsIgnoreCase(result.title)) {
               TextView album = text(result.album, 12, muted);
               album.setMaxLines(1);
               album.setEllipsize(TextUtils.TruncateAt.END);
@@ -2059,20 +2087,24 @@ public class MainActivity extends Activity {
             return entry;
           }
         };
-    results.setDivider(null);
+    results.setDivider(new android.graphics.drawable.ColorDrawable(darkTheme ? 0xff303640 : 0xffe3e7ed));
+    results.setDividerHeight(dp(1));
+    results.setVerticalScrollBarEnabled(false);
     results.setBackground(shape(card, 14));
     results.setAdapter(a);
-    panel.addView(results, new LinearLayout.LayoutParams(-1, dp(280)));
+    panel.addView(results, new LinearLayout.LayoutParams(-1, 0, 1));
     TextView more = button(tr("검색"), () -> {});
-    panel.addView(more);
+    more.setTextSize(13);
+    more.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+    more.setVisibility(View.GONE);
+    panel.addView(more, new LinearLayout.LayoutParams(-1, dp(44)));
     final int[] page = {0}, generation = {0};
     final boolean[] busy = {false}, hasMore = {false};
     final String[] terms = {"", ""};
     SheetDialog dialog =
         new SheetDialog.Builder(this)
             .setTitle("가사 검색")
-            .setView(panel)
-            .setNegativeButton("닫기", null)
+            .setFlexibleView(panel)
             .create();
     Runnable fetch =
         () -> {
@@ -2082,6 +2114,8 @@ public class MainActivity extends Activity {
           String q = terms[0], ar = terms[1];
           status.setText(tr("검색 중…"));
           more.setText(tr("불러오는 중…"));
+          more.setVisibility(View.VISIBLE);
+          more.setEnabled(false);
           io.execute(
               () -> {
                 Lyrics.Page found = Lyrics.search(q, ar, p);
@@ -2096,13 +2130,13 @@ public class MainActivity extends Activity {
                       page[0]++;
                       hasMore[0] = found.more;
                       a.notifyDataSetChanged();
-                      status.setText(
-                          items.size()
-                              + "개 결과"
-                              + (found.notice.trim().isEmpty() ? "" : " · " + found.notice));
+                      status.setText(items.isEmpty()
+                          ? tr(found.notice.trim().isEmpty() ? "검색 결과가 없습니다" : "연결이 원활하지 않습니다. 다시 검색해 주세요.")
+                          : items.size() + tr("개 결과"));
                       more.setText(
                           tr(found.more ? "결과 더 불러오기" : items.isEmpty() ? "검색 결과가 없습니다" : "마지막 결과입니다"));
                       more.setEnabled(found.more);
+                      more.setVisibility(found.more ? View.VISIBLE : View.GONE);
                     });
               });
         };
@@ -2110,9 +2144,15 @@ public class MainActivity extends Activity {
         button(
             "검색",
             () -> {
+              android.view.inputmethod.InputMethodManager keyboard =
+                  (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+              if (keyboard != null) keyboard.hideSoftInputFromWindow(title.getWindowToken(), 0);
+              title.clearFocus(); artist.clearFocus();
               generation[0]++;
               busy[0] = false;
               page[0] = 0;
+              hasMore[0] = false;
+              more.setVisibility(View.GONE);
               items.clear();
               a.notifyDataSetChanged();
               terms[0] = title.getText().toString().trim();
@@ -2124,10 +2164,26 @@ public class MainActivity extends Activity {
               more.setEnabled(true);
               fetch.run();
             });
-    panel.addView(search, 2);
-    panel.addView(button(tr("가수로만 검색"), () -> {
+    LinearLayout actions = row();
+    TextView artistOnly = button(tr("가수로만 검색"), () -> {
       title.setText(""); search.performClick();
-    }), 3);
+    });
+    search.setTextSize(14);
+    search.setTextColor(android.graphics.Color.WHITE);
+    search.setBackground(shape(accent, 12));
+    artistOnly.setTextSize(14);
+    LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, dp(48), 1);
+    searchParams.rightMargin = dp(8);
+    actions.addView(search, searchParams);
+    actions.addView(artistOnly, new LinearLayout.LayoutParams(0, dp(48), 1));
+    panel.addView(actions, 2);
+    artist.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+    artist.setOnEditorActionListener((view, action, event) -> {
+      if (action == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+        search.performClick(); return true;
+      }
+      return false;
+    });
     more.setOnClickListener(
         v -> {
           if (hasMore[0]) fetch.run();

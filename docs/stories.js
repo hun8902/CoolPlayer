@@ -73,3 +73,39 @@
    });
  }));
 })();
+
+(() => {
+ const root = document.querySelector('.journey-story');
+ if (!root) return;
+ const stage = root.querySelector('.journey-stage');
+ const chapters = [...root.querySelectorAll('.journey-chapters article')];
+ const images = [...root.querySelectorAll('.journey-phone img')];
+ const counter = root.querySelector('.journey-position span');
+ let selected = -1, pending = 0;
+ function update() {
+   pending = 0;
+   const height = innerHeight;
+   const bottom = stage.getBoundingClientRect().bottom;
+   const target = innerWidth <= 700 ? bottom + (height - bottom) * .5 : height * .52;
+   let nearest = 0, distance = Infinity;
+   chapters.forEach((chapter, index) => {
+     const rect = chapter.getBoundingClientRect();
+     const next = Math.abs(rect.top + rect.height / 2 - target);
+     if(next < distance) { distance = next; nearest = index; }
+   });
+   if (selected === nearest) return;
+   selected = nearest;
+   images.forEach((image, index) => {
+     image.classList.toggle('current', index === selected);
+     image.setAttribute('aria-hidden', String(index !== selected));
+     chapters[index].classList.toggle('current', index === selected);
+   });
+   counter.textContent = String(selected + 1).padStart(2, '0');
+ }
+ function schedule() { if(!pending) pending = requestAnimationFrame(update); }
+ addEventListener('scroll', schedule, {passive:true});
+ addEventListener('resize', schedule, {passive:true});
+ addEventListener('pageshow', schedule);
+ addEventListener('pagehide', () => { cancelAnimationFrame(pending); pending = 0; });
+ update();
+})();

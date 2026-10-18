@@ -31,3 +31,25 @@
  addEventListener('pagehide', () => { cancelAnimationFrame(pending); pending = 0; });
  update();
 })();
+
+(() => {
+ const root = document.querySelector('.comparison-view');
+ if (!root) return;
+ const buttons = [...root.querySelectorAll('[data-comparison]')];
+ const images = [...root.querySelectorAll('.comparison-device img')];
+ const views = {
+   phone: [['assets/samsung-phone.jpg','삼성 Music의 접힌 화면'],['assets/player-lyrics.jpg','Cool Player의 접힌 화면, 가사를 가져온 후']],
+   wide: [['assets/samsung-wide.jpg','삼성 Music의 펼친 화면'],['assets/player-wide.jpg','Cool Player의 펼친 화면, 앨범과 실시간 가사']]
+ };
+ // Prepare wide images without changing the selected view.
+ views.wide.forEach(([src]) => { const image = new Image(); image.src = src; });
+ buttons.forEach(button => button.addEventListener('click', () => {
+   const mode = button.dataset.comparison;
+   root.classList.toggle('is-wide', mode === 'wide');
+   buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+   images.forEach((image, index) => {
+     image.src = views[mode][index][0];
+     image.alt = views[mode][index][1];
+   });
+ }));
+})();

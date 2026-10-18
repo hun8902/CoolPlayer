@@ -2109,12 +2109,15 @@ public class MainActivity extends Activity {
     artist.setSingleLine();
     artist.setText(t.artist.equals("알 수 없는 아티스트") ? "" : t.artist);
     LinearLayout fields = row();
-    LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(0, dp(48), 1);
-    titleParams.rightMargin = dp(8);
-    fields.addView(title, titleParams);
-    fields.addView(artist, new LinearLayout.LayoutParams(0, dp(48), 1));
+    fields.setBackground(shape(card, 24));
+    fields.setPadding(dp(4), 0, dp(4), 0);
+    fields.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
     panel.addView(fields);
-    space(panel, 10);
+    space(panel, 8);
+    LinearLayout filters = row();
+    filters.addView(artist, new LinearLayout.LayoutParams(0, dp(40), 1));
+    panel.addView(filters);
+    final boolean[] artistFilter = {false};
     TextView status = text(tr("곡명 또는 가수 이름으로 검색하세요"), 12, muted);
     status.setPadding(dp(4), dp(12), dp(4), dp(12));
     panel.addView(status);
@@ -2161,7 +2164,7 @@ public class MainActivity extends Activity {
     results.setDivider(new android.graphics.drawable.ColorDrawable(darkTheme ? 0xff303640 : 0xffe3e7ed));
     results.setDividerHeight(dp(1));
     results.setVerticalScrollBarEnabled(false);
-    results.setBackground(shape(card, 14));
+    results.setBackgroundColor(Color.TRANSPARENT);
     results.setAdapter(a);
     panel.addView(results, new LinearLayout.LayoutParams(-1, 0, 1));
     TextView more = button(tr("검색"), () -> {});
@@ -2212,8 +2215,8 @@ public class MainActivity extends Activity {
               });
         };
     TextView search =
-        button(
-            "검색",
+        icon(
+            "search", "검색",
             () -> {
               android.view.inputmethod.InputMethodManager keyboard =
                   (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
@@ -2226,7 +2229,7 @@ public class MainActivity extends Activity {
               more.setVisibility(View.GONE);
               items.clear();
               a.notifyDataSetChanged();
-              terms[0] = title.getText().toString().trim();
+              terms[0] = artistFilter[0] ? "" : title.getText().toString().trim();
               terms[1] = artist.getText().toString().trim();
               if ((terms[0] + terms[1]).trim().isEmpty()) {
                 status.setText(tr("곡명 또는 가수 이름을 입력하세요"));
@@ -2235,19 +2238,42 @@ public class MainActivity extends Activity {
               more.setEnabled(true);
               fetch.run();
             });
-    LinearLayout actions = row();
-    TextView artistOnly = button(tr("가수로만 검색"), () -> {
-      title.setText(""); search.performClick();
+    TextView clearQuery = icon("close", tr("지우기"), () -> {
+      title.setText("");
+      title.requestFocus();
     });
-    search.setTextSize(14);
-    search.setTextColor(android.graphics.Color.WHITE);
-    search.setBackground(shape(accent, 12));
-    artistOnly.setTextSize(14);
-    LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, dp(48), 1);
-    searchParams.rightMargin = dp(8);
-    actions.addView(search, searchParams);
-    actions.addView(artistOnly, new LinearLayout.LayoutParams(0, dp(48), 1));
-    panel.addView(actions, 2);
+    clearQuery.setVisibility(title.length() == 0 ? View.GONE : View.VISIBLE);
+    title.addTextChangedListener(new android.text.TextWatcher() {
+      public void beforeTextChanged(CharSequence value, int start, int count, int after) {}
+      public void onTextChanged(CharSequence value, int start, int before, int count) {
+        clearQuery.setVisibility(value.length() == 0 ? View.GONE : View.VISIBLE);
+      }
+      public void afterTextChanged(android.text.Editable value) {}
+    });
+    fields.addView(clearQuery, new LinearLayout.LayoutParams(dp(48), dp(48)));
+    fields.addView(search, new LinearLayout.LayoutParams(dp(48), dp(48)));
+    TextView artistOnly = text(tr("가수로만 검색"), 12, muted);
+    artistOnly.setGravity(Gravity.CENTER);
+    artistOnly.setPadding(dp(12), 0, dp(12), 0);
+    artistOnly.setBackground(shape(card, 20));
+    artistOnly.setFocusable(true);
+    artistOnly.setOnClickListener(v -> {
+      artistFilter[0] = !artistFilter[0];
+      artistOnly.setSelected(artistFilter[0]);
+      artistOnly.setTextColor(artistFilter[0] ? accent : muted);
+      artistOnly.setText((artistFilter[0] ? "✓ " : "") + tr("가수로만 검색"));
+      title.setEnabled(!artistFilter[0]);
+      title.setAlpha(artistFilter[0] ? .45f : 1);
+      search.performClick();
+    });
+    filters.addView(artistOnly, new LinearLayout.LayoutParams(-2, dp(48)));
+    title.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
+    title.setOnEditorActionListener((view, action, event) -> {
+      if (action == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
+        search.performClick(); return true;
+      }
+      return false;
+    });
     artist.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);
     artist.setOnEditorActionListener((view, action, event) -> {
       if (action == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
@@ -2307,6 +2333,12 @@ public class MainActivity extends Activity {
           generation[0]++;
         });
     dialog.show();
+    title.setBackgroundColor(Color.TRANSPARENT);
+    title.setPadding(dp(14), 0, dp(4), 0);
+    artist.setBackgroundColor(Color.TRANSPARENT);
+    artist.setTextSize(13);
+    artist.setPadding(dp(8), 0, dp(8), 0);
+    search.performClick();
   }
 
   LinearLayout settingsGroup(LinearLayout parent, String title) {

@@ -32,6 +32,14 @@ final class PlayerGlyph extends Drawable {
     canvas.scale(getBounds().width() / 24f, getBounds().height() / 24f);
     paint.setStyle(Paint.Style.STROKE);
     switch (name) {
+      case "close":
+        line(canvas, 7, 7, 17, 17);
+        line(canvas, 17, 7, 7, 17);
+        break;
+      case "search":
+        canvas.drawCircle(10, 10, 6, paint);
+        line(canvas, 15, 15, 21, 21);
+        break;
       case "sort":
         line(canvas, 4, 6, 20, 6);
         line(canvas, 7, 12, 17, 12);

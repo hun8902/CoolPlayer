@@ -15,24 +15,60 @@ public class PlayerWidget extends AppWidgetProvider {
     updateAll(c, null);
   }
 
+  @Override
+  public void onAppWidgetOptionsChanged(Context c, AppWidgetManager manager, int id, android.os.Bundle options) {
+    updateAll(c, null);
+  }
+
   static void updateAll(Context c, Player player) {
+    updateType(c, player, PlayerWidget.class, R.layout.widget);
+    updateType(c, player, SquarePlayerWidget.class, R.layout.widget_square);
+  }
+
+  static void updateType(Context c, Player player, Class<?> provider, int layout) {
     AppWidgetManager m = AppWidgetManager.getInstance(c);
-    int[] ids = m.getAppWidgetIds(new ComponentName(c, PlayerWidget.class));
+    int[] ids = m.getAppWidgetIds(new ComponentName(c, provider));
     if (ids.length == 0) return;
-    RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget);
+    RemoteViews v = new RemoteViews(c.getPackageName(), layout);
     String title = c.getSharedPreferences("playback", 0).getString("title", "Cool Player"),
         artist = c.getSharedPreferences("playback", 0).getString("artist", "음악을 선택하세요");
     v.setTextViewText(R.id.widget_title, title);
     v.setTextViewText(R.id.widget_artist, artist);
-    widgetIcon(v, R.id.widget_play, player != null && player.isPlaying() ? "pause" : "play");
+    android.content.SharedPreferences state = c.getSharedPreferences("widget", 0);
+    if (player != null) state.edit()
+        .putBoolean("playing", player.isPlaying())
+        .putString("art", player.getMediaMetadata().artworkUri == null ? "" : player.getMediaMetadata().artworkUri.getPath()).apply();
+    boolean playing = player != null ? player.isPlaying() : state.getBoolean("playing", false);
+    widgetIcon(v, R.id.widget_play, playing ? "pause" : "play");
+    v.setContentDescription(R.id.widget_play, playing ? "일시정지" : "재생");
     widgetIcon(v, R.id.widget_previous, "previous");
     widgetIcon(v, R.id.widget_next, "next");
     v.setImageViewResource(R.id.widget_art, R.drawable.brand);
-    if (player != null && player.getMediaMetadata().artworkUri != null) {
+    String art = state.getString("art", "");
+    if (!art.isEmpty()) {
       BitmapFactory.Options options = new BitmapFactory.Options();
-      options.inSampleSize = 8;
-      Bitmap b = BitmapFactory.decodeFile(player.getMediaMetadata().artworkUri.getPath(), options);
-      if (b != null) v.setImageViewBitmap(R.id.widget_art, b);
+      options.inJustDecodeBounds = true;
+      BitmapFactory.decodeFile(art, options);
+      options.inSampleSize = 1;
+      while (Math.max(options.outWidth, options.outHeight) / options.inSampleSize > 384)
+        options.inSampleSize *= 2;
+      options.inJustDecodeBounds = false;
+      Bitmap source = BitmapFactory.decodeFile(art, options);
+      if (source != null) {
+        Bitmap cover = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(cover);
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        BitmapShader shader = new BitmapShader(source, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
+        Matrix matrix = new Matrix();
+        float scale = 256f / Math.min(source.getWidth(), source.getHeight());
+        matrix.setScale(scale, scale);
+        matrix.postTranslate((256 - source.getWidth() * scale) / 2, (256 - source.getHeight() * scale) / 2);
+        shader.setLocalMatrix(matrix);
+        paint.setShader(shader);
+        canvas.drawRoundRect(new RectF(0, 0, 256, 256), 24, 24, paint);
+        v.setImageViewBitmap(R.id.widget_art, cover);
+        source.recycle();
+      }
     }
     v.setOnClickPendingIntent(
         R.id.widget_open,
@@ -56,7 +92,7 @@ public class PlayerWidget extends AppWidgetProvider {
 
   static void widgetIcon(RemoteViews views, int id, String name) {
     Bitmap bitmap = Bitmap.createBitmap(72, 72, Bitmap.Config.ARGB_8888);
-    PlayerGlyph glyph = new PlayerGlyph(name, 0xff263142, 72);
+    PlayerGlyph glyph = new PlayerGlyph(name, Color.WHITE, 72);
     glyph.setBounds(0, 0, 72, 72);
     glyph.draw(new Canvas(bitmap));
     views.setImageViewBitmap(id, bitmap);

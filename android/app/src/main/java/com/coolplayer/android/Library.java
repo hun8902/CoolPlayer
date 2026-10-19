@@ -67,24 +67,54 @@ final class Library {
 
   Library(Context c) {
     context = c.getApplicationContext();
-    boolean fresh = !new File(context.getFilesDir(), "library.json").exists();
     load();
-    if (fresh && !context.getSharedPreferences("settings", 0).getBoolean("sampleAdded", false)) {
+    if (!context.getSharedPreferences("settings", 0).getBoolean("experienceSongsV2", false)) {
       try {
-        File audio = new File(context.getFilesDir(), "amazing-grace.mp3");
-        try (InputStream in = context.getAssets().open("amazing-grace.mp3"); FileOutputStream out = new FileOutputStream(audio)) {
-          out.write(readBytes(in, 4_000_000));
+        ArrayList<String> ids = new ArrayList<>();
+        Track first = find("cool-player-welcome");
+        if (first == null) {
+          first = bundledTrack("cool-player-welcome", "amazing-grace.mp3", "Amazing Grace",
+              "Rocks From The Garden", "MP3", 37000);
+          first.lyrics = bundledLyrics("amazing-grace.lrc");
+          tracks.add(first);
         }
-        Track t = new Track();
-        t.id = "cool-player-welcome"; t.uri = Uri.fromFile(audio).toString();
-        t.title = "Amazing Grace"; t.artist = "Rocks From The Garden";
-        t.album = "Live · 2006"; t.format = "MP3"; t.duration = 37000;
-        try (InputStream in = context.getAssets().open("amazing-grace.lrc")) {
-          t.lyrics = new String(readBytes(in, 100_000), StandardCharsets.UTF_8);
+        ids.add(first.id);
+        Track second = find("cool-player-experience-auld");
+        if (second == null) {
+          second = bundledTrack("cool-player-experience-auld", "auld-lang-syne.ogg", "Auld Lang Syne",
+              "Bautsch", "OGG", 42734);
+          tracks.add(second);
         }
-        tracks.add(t); save();
-        context.getSharedPreferences("settings", 0).edit().putBoolean("sampleAdded", true).apply();
+        ids.add(second.id);
+        String name = "Cool Player 체험";
+        int suffix = 2;
+        while (playlists.containsKey(name)) name = "Cool Player 체험 " + suffix++;
+        playlists.put(name, ids);
+        save();
+        context.getSharedPreferences("settings", 0).edit()
+            .putBoolean("sampleAdded", true).putBoolean("experienceSongsV2", true).apply();
       } catch (IOException ignored) { }
+    }
+  }
+
+  Track bundledTrack(String id, String asset, String title, String artist, String format, long duration)
+      throws IOException {
+    File folder = new File(context.getFilesDir(), "experience");
+    if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Cannot create sample folder");
+    File audio = new File(folder, asset);
+    try (InputStream in = context.getAssets().open(asset); FileOutputStream out = new FileOutputStream(audio)) {
+      out.write(readBytes(in, 4_000_000));
+    }
+    Track track = new Track();
+    track.id = id; track.uri = Uri.fromFile(audio).toString();
+    track.title = title; track.artist = artist; track.album = "Cool Player 체험";
+    track.format = format; track.duration = duration;
+    return track;
+  }
+
+  String bundledLyrics(String asset) throws IOException {
+    try (InputStream in = context.getAssets().open(asset)) {
+      return new String(readBytes(in, 100_000), StandardCharsets.UTF_8);
     }
   }
 

@@ -313,13 +313,37 @@ public class MainActivity extends Activity {
   }
 
   TextView button(String s, Runnable action) {
-    TextView b = text(tr(s), 15, accent);
+    TextView b = text(tr(s), 14, accent);
+    b.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+    b.setIncludeFontPadding(true);
     b.setGravity(Gravity.CENTER);
-    b.setPadding(dp(12), dp(10), dp(12), dp(10));
+    b.setPadding(dp(20), dp(10), dp(20), dp(10));
     b.setMinHeight(dp(48));
-    b.setBackground(
-        new android.graphics.drawable.RippleDrawable(
-            android.content.res.ColorStateList.valueOf(0x227788AA), shape(card, 14), null));
+    android.graphics.drawable.GradientDrawable glass =
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            darkTheme ? new int[] {0xe63b414e, 0xe62b303b}
+                : new int[] {0xfaffffff, 0xe8e9eef6});
+    glass.setCornerRadius(dp(24));
+    glass.setStroke(dp(1), darkTheme ? 0x28ffffff : 0x407d8da8);
+    b.setBackground(new android.graphics.drawable.RippleDrawable(
+        android.content.res.ColorStateList.valueOf(darkTheme ? 0x28ffffff : 0x185370a0),
+        glass, shape(Color.WHITE, 24)));
+    if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+      android.animation.StateListAnimator states = new android.animation.StateListAnimator();
+      android.animation.AnimatorSet pressed = new android.animation.AnimatorSet();
+      pressed.playTogether(android.animation.ObjectAnimator.ofFloat(b, "scaleX", .97f),
+          android.animation.ObjectAnimator.ofFloat(b, "scaleY", .97f));
+      pressed.setDuration(100);
+      android.animation.AnimatorSet released = new android.animation.AnimatorSet();
+      released.playTogether(android.animation.ObjectAnimator.ofFloat(b, "scaleX", 1f),
+          android.animation.ObjectAnimator.ofFloat(b, "scaleY", 1f));
+      released.setDuration(220);
+      released.setInterpolator(new android.view.animation.PathInterpolator(.22f, .75f, .18f, 1));
+      states.addState(new int[] {android.R.attr.state_pressed, android.R.attr.state_enabled}, pressed);
+      states.addState(new int[] {}, released);
+      b.setStateListAnimator(states);
+    }
     b.setClickable(true);
     b.setFocusable(true);
     b.setOnClickListener(v -> action.run());
@@ -1219,10 +1243,12 @@ public class MainActivity extends Activity {
     stage.addView(
         left,
         wide ? new LinearLayout.LayoutParams(0, -1, 1) : new LinearLayout.LayoutParams(-1, -1));
+    final LinearLayout contentPane;
     if (wide) {
       Space gap = new Space(this);
       stage.addView(gap, new LinearLayout.LayoutParams(dp(32), 1));
       LinearLayout right = column();
+      contentPane = right;
       stage.addView(right, new LinearLayout.LayoutParams(0, -1, 1));
       buildArtwork(left, t);
       buildTransport(left, t);
@@ -1251,20 +1277,37 @@ public class MainActivity extends Activity {
             }
           });
     } else {
-      if (showPhoneLyrics) {
-        LinearLayout pane = column();
-        left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
-        buildLyricsPanel(pane, t);
-      } else {
-        buildArtwork(left, t);
-      }
+      contentPane = column();
+      left.addView(contentPane, new LinearLayout.LayoutParams(-1, 0, 1));
+      if (showPhoneLyrics) buildLyricsPanel(contentPane, t);
+      else buildArtwork(contentPane, t);
       buildTransport(left, t);
     }
     LinearLayout tools = row();
     tools.setGravity(Gravity.CENTER);
-    TextView lyricsToggle = icon("lyrics", tr("가사"), () -> {
+    TextView lyricsToggle = icon("lyrics", tr("가사"), () -> {});
+    lyricsToggle.setOnClickListener(v -> {
+      android.transition.TransitionManager.endTransitions(contentPane);
+      if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        android.transition.TransitionSet transition = new android.transition.TransitionSet();
+        transition.setOrdering(android.transition.TransitionSet.ORDERING_TOGETHER);
+        transition.addTransition(new android.transition.Fade());
+        transition.addTransition(new android.transition.ChangeBounds());
+        transition.setDuration(360);
+        transition.setInterpolator(new android.view.animation.PathInterpolator(.22f, .75f, .18f, 1));
+        android.transition.TransitionManager.beginDelayedTransition(contentPane, transition);
+      }
       showPhoneLyrics = !showPhoneLyrics;
-      render();
+      renderedLyrics = showPhoneLyrics;
+      contentPane.removeAllViews();
+      lyricContent = null;
+      lyricViews.clear();
+      if (showPhoneLyrics) buildLyricsPanel(contentPane, current());
+      else if (wide) buildInlineQueue(contentPane);
+      else buildArtwork(contentPane, current());
+      setIcon(lyricsToggle, "lyrics", showPhoneLyrics ? accent : muted, 22);
+      lyricsToggle.setSelected(showPhoneLyrics);
+      updatePlayback();
     });
     setIcon(lyricsToggle, "lyrics", showPhoneLyrics ? accent : muted, 22);
     tools.addView(lyricsToggle, new LinearLayout.LayoutParams(0, dp(48), 1));
@@ -1533,7 +1576,16 @@ public class MainActivity extends Activity {
       empty.setGravity(Gravity.CENTER);
       lyricContent.addView(empty);
       space(lyricContent, 20);
-      if (t != null) lyricContent.addView(button(tr("가사 가져오기"), () -> autoLyrics(t)));
+      if (t != null) {
+        TextView fetch = button("가사 가져오기", () -> autoLyrics(t));
+        PlayerGlyph glyph = new PlayerGlyph("download", accent, dp(18));
+        glyph.setBounds(0, 0, dp(18), dp(18));
+        fetch.setCompoundDrawablesRelative(glyph, null, null, null);
+        fetch.setCompoundDrawablePadding(dp(8));
+        LinearLayout.LayoutParams placement = new LinearLayout.LayoutParams(-2, -2);
+        placement.gravity = Gravity.CENTER_HORIZONTAL;
+        lyricContent.addView(fetch, placement);
+      }
       return;
     }
     if (lines.isEmpty()) {
@@ -2046,17 +2098,52 @@ public class MainActivity extends Activity {
     toast("가사를 가져와 저장했습니다");
   }
 
+  final java.util.HashSet<String> lyricRequests = new java.util.HashSet<>();
+
   void autoLyrics(Library.Track t) {
-    toast("곡명과 가수로 가사를 찾고 있습니다");
-    io.execute(
-        () -> {
-          try {
-            String raw = Lyrics.automatic(t);
-            runOnUiThread(() -> applyLyrics(t, raw));
-          } catch (Exception e) {
-            toast(e.getMessage() == null ? "가사를 가져오지 못했습니다" : e.getMessage());
+    if (!lyricRequests.add(t.id)) return;
+    boolean bundled = t.id.equals("cool-player-experience-auld");
+    LinearLayout status = row();
+    status.setPadding(dp(4), dp(12), dp(4), dp(16));
+    ProgressBar spinner = new ProgressBar(this);
+    spinner.setIndeterminateTintList(android.content.res.ColorStateList.valueOf(accent));
+    status.addView(spinner, new LinearLayout.LayoutParams(dp(24), dp(24)));
+    TextView message = text(tr(bundled ? "체험곡에 제공된 가사를 불러오는 중" : "곡명과 가수로 가사를 찾는 중"), 15, muted);
+    message.setPadding(dp(14), 0, 0, 0);
+    status.addView(message, new LinearLayout.LayoutParams(0, -2, 1));
+    SheetDialog progress = new SheetDialog.Builder(this).setTitle("가사 가져오기").setView(status).create();
+    final boolean[] cancelled = {false};
+    progress.setOnCancelListener(d -> cancelled[0] = true);
+    progress.show();
+    io.execute(() -> {
+      try {
+        String raw = bundled ? library.bundledLyrics("auld-lang-syne.txt") : Lyrics.automatic(t);
+        runOnUiThread(() -> {
+          lyricRequests.remove(t.id);
+          if (destroyed || cancelled[0]) return;
+          if (lyricContent != null && android.animation.ValueAnimator.areAnimatorsEnabled()) {
+            android.transition.TransitionManager.beginDelayedTransition(lyricContent,
+                new android.transition.Fade().setDuration(280));
           }
+          applyLyrics(t, raw);
+          spinner.setVisibility(View.GONE);
+          message.setText(tr("가사를 저장했습니다"));
+          message.setTextColor(accent);
+          status.announceForAccessibility(message.getText());
+          status.postDelayed(() -> { if (!destroyed) progress.dismiss(); }, 550);
         });
+      } catch (Exception e) {
+        runOnUiThread(() -> {
+          lyricRequests.remove(t.id);
+          if (destroyed || cancelled[0]) return;
+          progress.dismiss();
+          new SheetDialog.Builder(this).setTitle("가사를 가져오지 못했습니다")
+              .setMessage(e.getMessage() == null ? "연결을 확인하고 다시 시도해 주세요." : e.getMessage())
+              .setPositiveButton("다시 시도", (d, w) -> autoLyrics(t))
+              .setNegativeButton("닫기", null).show();
+        });
+      }
+    });
   }
 
   void lyricsMenu(Library.Track t) {
@@ -2393,7 +2480,16 @@ public class MainActivity extends Activity {
             android.content.res.ColorStateList.valueOf(0x227788aa), null, shape(Color.WHITE, 16)));
     row.setClickable(true);
     row.setFocusable(true);
-    row.setOnClickListener(v -> action.run());
+    row.setOnClickListener(v -> {
+      if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
+        row.animate().cancel();
+        row.setScaleX(.985f);
+        row.setScaleY(.985f);
+        row.animate().scaleX(1).scaleY(1).setDuration(180)
+            .setInterpolator(new android.view.animation.PathInterpolator(.22f, .75f, .18f, 1)).start();
+      }
+      action.run();
+    });
     group.addView(row);
   }
 

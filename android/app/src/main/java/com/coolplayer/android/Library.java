@@ -68,33 +68,64 @@ final class Library {
   Library(Context c) {
     context = c.getApplicationContext();
     load();
-    if (!context.getSharedPreferences("settings", 0).getBoolean("experienceSongsV2", false)) {
+    if (!context.getSharedPreferences("settings", 0).getBoolean("experienceSongsV3", false)) {
       try {
-        ArrayList<String> ids = new ArrayList<>();
         Track first = find("cool-player-welcome");
         if (first == null) {
-          first = bundledTrack("cool-player-welcome", "amazing-grace.mp3", "Amazing Grace",
-              "Rocks From The Garden", "MP3", 37000);
-          first.lyrics = bundledLyrics("amazing-grace.lrc");
-          tracks.add(first);
+          first = bundledTrack("cool-player-welcome", "amazing-grace.mp3", "Amazing Grace", "Rocks From The Garden", "MP3", 37000);
+          first.lyrics = bundledLyrics("amazing-grace.lrc"); tracks.add(first);
         }
-        ids.add(first.id);
-        Track second = find("cool-player-experience-auld");
+        if (first.art.isEmpty()) first.art = sampleCover("grace", "AMAZING", "GRACE", false);
+        Track second = find("cool-player-experience-twinkle");
         if (second == null) {
-          second = bundledTrack("cool-player-experience-auld", "auld-lang-syne.ogg", "Auld Lang Syne",
-              "Bautsch", "OGG", 42734);
+          second = bundledTrack("cool-player-experience-twinkle", "twinkle.ogg", "Twinkle, Twinkle, Little Star", "CommandSpry", "OGG", 24567);
+          second.art = sampleCover("twinkle", "TWINKLE", "LITTLE STAR", true);
           tracks.add(second);
         }
-        ids.add(second.id);
-        String name = "Cool Player 체험";
-        int suffix = 2;
-        while (playlists.containsKey(name)) name = "Cool Player 체험 " + suffix++;
-        playlists.put(name, ids);
+        Track old = find("cool-player-experience-auld");
+        if (old != null) tracks.remove(old);
+        for (ArrayList<String> ids : playlists.values()) {
+          for (int i = 0; i < ids.size(); i++) if (ids.get(i).equals("cool-player-experience-auld")) ids.set(i, second.id);
+        }
+        boolean hasExperience = false;
+        for (ArrayList<String> ids : playlists.values()) if (ids.contains(first.id) && ids.contains(second.id)) hasExperience = true;
+        if (!hasExperience) {
+          String name = "Cool Player 체험"; int suffix = 2;
+          while (playlists.containsKey(name)) name = "Cool Player 체험 " + suffix++;
+          playlists.put(name, new ArrayList<>(Arrays.asList(first.id, second.id)));
+        }
         save();
-        context.getSharedPreferences("settings", 0).edit()
-            .putBoolean("sampleAdded", true).putBoolean("experienceSongsV2", true).apply();
+        context.getSharedPreferences("settings", 0).edit().putBoolean("experienceSongsV3", true).apply();
       } catch (IOException ignored) { }
     }
+  }
+
+  String sampleCover(String name, String title, String subtitle, boolean night) throws IOException {
+    android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(640, 640, android.graphics.Bitmap.Config.ARGB_8888);
+    android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+    android.graphics.Paint paint = new android.graphics.Paint(3);
+    paint.setShader(new android.graphics.LinearGradient(0, 0, 640, 640,
+        night ? 0xff172742 : 0xffc1cdb7, night ? 0xff796b9c : 0xff4a7973, android.graphics.Shader.TileMode.CLAMP));
+    canvas.drawRect(0, 0, 640, 640, paint); paint.setShader(null);
+    if (night) {
+      java.util.Random random = new java.util.Random(42);
+      paint.setColor(0xffeee4d1);
+      for (int i = 0; i < 64; i++) canvas.drawCircle(random.nextInt(640), random.nextInt(400), 1 + random.nextInt(3), paint);
+      canvas.drawCircle(470, 150, 56, paint);
+      paint.setColor(0xff3c4268); canvas.drawCircle(490, 132, 54, paint);
+    } else {
+      paint.setColor(0x66fdf6df); canvas.drawCircle(460, 160, 95, paint);
+      for (int i = 0; i < 5; i++) { paint.setColor(0x24305050); canvas.drawOval(-200, 240+i*50, 900, 820+i*50, paint); }
+    }
+    paint.setColor(0xfffaf8f0); paint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", 0));
+    paint.setTextSize(50); canvas.drawText(title, 48, 470, paint);
+    paint.setTextSize(38); canvas.drawText(subtitle, 48, 520, paint);
+    paint.setTextSize(16); canvas.drawText("COOL PLAYER  /  LISTEN & DISCOVER", 48, 588, paint);
+    File folder = new File(context.getFilesDir(), "experience");
+    if (!folder.isDirectory() && !folder.mkdirs()) throw new IOException("Cannot create cover folder");
+    File file = new File(folder, name + ".png");
+    try (FileOutputStream out = new FileOutputStream(file)) { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out); }
+    bitmap.recycle(); return file.getAbsolutePath();
   }
 
   Track bundledTrack(String id, String asset, String title, String artist, String format, long duration)
@@ -162,6 +193,7 @@ final class Library {
           temp.toPath(),
           new File(context.getFilesDir(), "library.json").toPath(),
           java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+      PlaylistWidget.updateAll(context);
     } catch (Exception e) {
       throw new IllegalStateException("보관함을 저장하지 못했습니다", e);
     }

@@ -84,7 +84,17 @@ public class PlaybackService extends MediaSessionService {
     if (intent != null && intent.getAction() != null) {
       String action = intent.getAction();
       String prefix = getPackageName() + ".widget.";
-      if (action.equals(prefix + "previous")) player.seekToPreviousMediaItem();
+      if (action.equals(prefix + "playlist")) {
+        Library library = new Library(this);
+        ArrayList<String> ids = library.playlists.get(intent.getStringExtra("playlist"));
+        ArrayList<MediaItem> items = new ArrayList<>();
+        if (ids != null) for (String trackId : ids) {
+          Library.Track track = library.find(trackId);
+          if (track != null) items.add(track.media());
+        }
+        if (!items.isEmpty()) { player.setMediaItems(items); player.prepare(); player.play(); }
+      }
+      else if (action.equals(prefix + "previous")) player.seekToPreviousMediaItem();
       else if (action.equals(prefix + "next")) player.seekToNextMediaItem();
       else if (action.equals(prefix + "toggle")) {
         if (player.getPlayWhenReady()) player.pause();

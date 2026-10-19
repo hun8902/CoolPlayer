@@ -24,34 +24,38 @@ final class SwipeDismissLayout extends LinearLayout {
     }
     return false;
   }
-  @Override public boolean onInterceptTouchEvent(MotionEvent e) {
-    if (e.getActionMasked() == MotionEvent.ACTION_DOWN) {
+  @Override public boolean dispatchTouchEvent(MotionEvent e) {
+    int action = e.getActionMasked();
+    if (action == MotionEvent.ACTION_DOWN) {
       startX = e.getRawX(); startY = e.getRawY(); dragging = false;
       eligible = !scrollsUp(this, e.getX(), e.getY());
-    } else if (e.getActionMasked() == MotionEvent.ACTION_MOVE && eligible) {
-      float dy = e.getRawY() - startY;
-      if (dy > ViewConfiguration.get(getContext()).getScaledTouchSlop()
-          && dy > Math.abs(e.getRawX() - startX) * 1.3f) {
-        dragging = true;
-        getParent().requestDisallowInterceptTouchEvent(true);
-        return true;
+      if (moving != null) moving.animate().cancel();
+    }
+    float dy = e.getRawY() - startY;
+    if (!dragging && eligible && action == MotionEvent.ACTION_MOVE
+        && dy > ViewConfiguration.get(getContext()).getScaledTouchSlop() * 2
+        && dy > Math.abs(e.getRawX() - startX) * 1.3f) {
+      dragging = true;
+      MotionEvent cancel = MotionEvent.obtain(e);
+      cancel.setAction(MotionEvent.ACTION_CANCEL);
+      super.dispatchTouchEvent(cancel);
+      cancel.recycle();
+    }
+    if (dragging) {
+      View target = moving == null ? this : moving;
+      if (action == MotionEvent.ACTION_MOVE) target.setTranslationY(Math.max(0, dy) * .7f);
+      if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+        dragging = false;
+        if (action == MotionEvent.ACTION_UP && dy > 56 * getResources().getDisplayMetrics().density && close != null)
+          close.run();
+        else target.animate().translationY(0).setDuration(220)
+            .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
       }
+      return true;
     }
-    return false;
-  }
-  @Override public boolean onTouchEvent(MotionEvent e) {
-    if (!dragging) return true;
-    View target = moving == null ? this : moving;
-    float dy = Math.max(0, e.getRawY() - startY);
-    if (e.getActionMasked() == MotionEvent.ACTION_MOVE) target.setTranslationY(dy * .7f);
-    else if (e.getActionMasked() == MotionEvent.ACTION_UP || e.getActionMasked() == MotionEvent.ACTION_CANCEL) {
-      boolean dismiss = e.getActionMasked() == MotionEvent.ACTION_UP
-          && dy > 64 * getResources().getDisplayMetrics().density;
-      dragging = false;
-      if (dismiss && close != null) close.run();
-      else target.animate().translationY(0).setDuration(220)
-          .setInterpolator(new android.view.animation.DecelerateInterpolator()).start();
-    }
+    // Consume blank header/handle space as well as child controls, so every
+    // starting point receives subsequent MOVE events.
+    super.dispatchTouchEvent(e);
     return true;
   }
 }

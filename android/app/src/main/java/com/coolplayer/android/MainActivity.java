@@ -115,6 +115,7 @@ public class MainActivity extends Activity {
   @Override
   protected void onResume() {
     super.onResume();
+    PlaylistWidget.updateAll(this);
     if (updates != null) updates.resume();
   }
 
@@ -2110,7 +2111,7 @@ public class MainActivity extends Activity {
 
   void autoLyrics(Library.Track t) {
     if (!lyricRequests.add(t.id)) return;
-    boolean bundled = t.id.equals("cool-player-experience-auld");
+    boolean bundled = t.id.equals("cool-player-experience-twinkle");
     LinearLayout status = row();
     status.setPadding(dp(4), dp(12), dp(4), dp(16));
     ProgressBar spinner = new ProgressBar(this);
@@ -2125,7 +2126,7 @@ public class MainActivity extends Activity {
     progress.show();
     io.execute(() -> {
       try {
-        String raw = bundled ? library.bundledLyrics("auld-lang-syne.txt") : Lyrics.automatic(t);
+        String raw = bundled ? library.bundledLyrics("twinkle.lrc") : Lyrics.automatic(t);
         runOnUiThread(() -> {
           lyricRequests.remove(t.id);
           if (destroyed || cancelled[0]) return;
@@ -2557,6 +2558,23 @@ public class MainActivity extends Activity {
         }).show();
   }
 
+  void showInfoAsset(String title, String asset) {
+    try {
+      TextView copy = text(library.bundledLyrics(asset), 15, ink);
+      copy.setTextIsSelectable(true);
+      copy.setAutoLinkMask(android.text.util.Linkify.WEB_URLS);
+      copy.setLineSpacing(dp(6), 1.1f);
+      copy.setPadding(dp(4), dp(8), dp(4), dp(20));
+      new SheetDialog.Builder(this).setTitle(title).setView(copy).setPositiveButton("닫기", null).show();
+    } catch (java.io.IOException e) { toast("안내를 불러오지 못했습니다"); }
+  }
+
+  void showUserGuide() {
+    String[] topics = {"음악 가져오기와 보관함", "플레이어와 제스처", "가사 가져오기와 타이밍", "재생목록과 위젯", "설정과 업데이트", "체험곡 사용하기"};
+    new SheetDialog.Builder(this).setTitle("사용법").setItems(topics,
+        (dialog, index) -> showInfoAsset(topics[index], "guide-" + index + ".txt")).show();
+  }
+
   void renderSettings() {
     heading(body, "설정", "");
     ScrollView scroll = new ScrollView(this);
@@ -2680,9 +2698,12 @@ public class MainActivity extends Activity {
         () -> {
           android.appwidget.AppWidgetManager widgets =
               android.appwidget.AppWidgetManager.getInstance(this);
-          if (widgets.isRequestPinAppWidgetSupported())
-            widgets.requestPinAppWidget(new ComponentName(this, PlayerWidget.class), null, null);
-          else toast("홈 화면을 길게 눌러 Cool Player 위젯을 선택하세요");
+          new SheetDialog.Builder(this).setTitle("위젯 선택")
+              .setItems(new String[]{"가로형 플레이어", "앨범형 플레이어", "재생목록"}, (dialog, index) -> {
+                Class<?> type = index == 0 ? PlayerWidget.class : index == 1 ? SquarePlayerWidget.class : PlaylistWidget.class;
+                if (widgets.isRequestPinAppWidgetSupported()) widgets.requestPinAppWidget(new ComponentName(this, type), null, null);
+                else toast("홈 화면을 길게 눌러 Cool Player 위젯을 선택하세요");
+              }).show();
         });
     LinearLayout updateGroup = settingsGroup(stack, "앱 업데이트");
     settingRow(
@@ -2691,6 +2712,10 @@ public class MainActivity extends Activity {
         value -> { if (updates.automatic() != value) updates.toggleAutomatic(); });
     if (new java.io.File(getCacheDir(), "updates/Cool-Player-Android.apk").exists())
       settingRow(updateGroup, "download", "다운로드한 업데이트 설치", "", () -> updates.install());
+    LinearLayout help = settingsGroup(stack, "사용법 및 정보");
+    settingRow(help, "lyrics", "사용법", "", this::showUserGuide);
+    settingRow(help, "music", "저작권 및 오픈소스", "", () -> showInfoAsset("저작권 및 오픈소스", "COPYRIGHT.txt"));
+    settingRow(help, "lyrics", "오픈소스 라이선스 전문", "", () -> showInfoAsset("Apache License 2.0", "APACHE-2.0.txt"));
     LinearLayout about = settingsGroup(stack, "Cool Player");
     settingRow(
         about,
@@ -2701,9 +2726,7 @@ public class MainActivity extends Activity {
             new SheetDialog.Builder(this)
                 .setTitle("Cool Player " + updates.version())
                 .setMessage(
-                    "기기에 담긴 음악과 가사를 함께 듣는 플레이어\n\n"
-                        + "FLAC · WAV · MP3 · AAC · Ogg · Opus\n\n"
-                        + "ALAC는 기기 디코더 지원에 따라 달라지며 실제 출력 형식은 연결된 장치에 따라 달라집니다.")
+                    "기기에 담긴 음악과 가사를 함께 즐기는 플레이어.\n\n사용 방법과 지원 기능은 설정의 사용법에서 확인할 수 있습니다.")
                 .setPositiveButton("확인", null)
                 .show());
     settingRow(

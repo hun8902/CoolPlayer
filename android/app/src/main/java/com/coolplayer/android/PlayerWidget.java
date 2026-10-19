@@ -37,10 +37,10 @@ public class PlayerWidget extends AppWidgetProvider {
         .putBoolean("playing", (player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED))
         .putString("art", player.getMediaMetadata().artworkUri == null ? "" : player.getMediaMetadata().artworkUri.getPath()).apply();
     boolean playing = player != null ? (player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED) : state.getBoolean("playing", false);
-    widgetIcon(v, R.id.widget_play, playing ? "pause" : "play");
+    widgetIcon(c, v, R.id.widget_play, playing ? "pause" : "play");
     v.setContentDescription(R.id.widget_play, playing ? "일시정지" : "재생");
-    widgetIcon(v, R.id.widget_previous, "previous");
-    widgetIcon(v, R.id.widget_next, "next");
+    widgetIcon(c, v, R.id.widget_previous, "previous");
+    widgetIcon(c, v, R.id.widget_next, "next");
     Bitmap placeholder = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
     Canvas placeholderCanvas = new Canvas(placeholder);
     Paint placeholderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -108,12 +108,9 @@ public class PlayerWidget extends AppWidgetProvider {
     }
   }
 
-  static void widgetIcon(RemoteViews views, int id, String name) {
-    Bitmap bitmap = Bitmap.createBitmap(72, 72, Bitmap.Config.ARGB_8888);
-    PlayerGlyph glyph = new PlayerGlyph(name, 0xff202633, 72);
-    glyph.setBounds(0, 0, 72, 72);
-    glyph.draw(new Canvas(bitmap));
-    views.setImageViewBitmap(id, bitmap);
+  static void widgetIcon(Context c, RemoteViews views, int id, String name) {
+    int resource = name.equals("pause") ? R.drawable.widget_pause : name.equals("previous") ? R.drawable.widget_previous : name.equals("next") ? R.drawable.widget_next : R.drawable.widget_play;
+    views.setImageViewResource(id, resource);
   }
 
 }

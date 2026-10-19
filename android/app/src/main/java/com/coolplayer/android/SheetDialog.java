@@ -143,7 +143,7 @@ final class SheetDialog extends Dialog {
     surface.addView(buttons);
     SwipeDismissLayout dragHost = new SwipeDismissLayout(a);
     dragHost.setOrientation(LinearLayout.VERTICAL);
-    dragHost.close = this::dismiss;
+    dragHost.close = this::cancel;
     dragHost.addView(surface, new LinearLayout.LayoutParams(-1, -2));
     setContentView(dragHost);
     dragHost.moving = getWindow().getDecorView();
@@ -232,7 +232,7 @@ final class SheetDialog extends Dialog {
     View decor = window.getDecorView();
     decor.animate().cancel();
     decor.animate()
-        .translationY(a.dp(a.expanded() ? 12 : 40))
+        .translationY(decor.getTranslationY() + a.dp(a.expanded() ? 24 : 56))
         .scaleX(.98f).scaleY(.98f).alpha(0)
         .setDuration(180)
         .setInterpolator(new android.view.animation.PathInterpolator(.4f, 0, 1, 1))

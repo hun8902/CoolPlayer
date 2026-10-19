@@ -14,6 +14,7 @@ import java.util.*;
 final class SheetDialog extends Dialog {
   final MainActivity a;
   final Builder spec;
+  boolean dismissing;
 
   SheetDialog(Builder b) {
     super(b.a);
@@ -39,7 +40,17 @@ final class SheetDialog extends Dialog {
         };
     surface.setOrientation(LinearLayout.VERTICAL);
     surface.setPadding(a.dp(20), a.dp(12), a.dp(20), a.dp(16));
-    surface.setBackground(a.shape(a.bg, 28));
+    android.graphics.drawable.GradientDrawable glass =
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            new int[] {
+              (a.bg & 0x00ffffff) | 0xe8000000,
+              (a.bg & 0x00ffffff) | 0xf5000000
+            });
+    glass.setCornerRadius(a.dp(28));
+    glass.setStroke(a.dp(1), a.darkTheme ? 0x30ffffff : 0x80ffffff);
+    surface.setBackground(glass);
+    surface.setClipToOutline(true);
     TextView handle = a.text("", 1, a.muted);
     handle.setBackground(a.shape(a.muted, 2));
     LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(a.dp(32), a.dp(4));
@@ -138,7 +149,13 @@ final class SheetDialog extends Dialog {
     if (window != null) {
       window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
       window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-      window.setDimAmount(.38f);
+      window.setDimAmount(.24f);
+      if (android.os.Build.VERSION.SDK_INT >= 31) {
+        window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+        WindowManager.LayoutParams attributes = window.getAttributes();
+        attributes.setBlurBehindRadius(a.dp(20));
+        window.setAttributes(attributes);
+      }
       window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
       window.setNavigationBarColor(a.bg);
       window.setGravity(a.expanded() ? Gravity.CENTER : Gravity.BOTTOM);
@@ -172,6 +189,7 @@ final class SheetDialog extends Dialog {
 
   @Override
   public void show() {
+    dismissing = false;
     super.show();
     Window w = getWindow();
     if (w != null) {
@@ -181,17 +199,43 @@ final class SheetDialog extends Dialog {
               : WindowManager.LayoutParams.WRAP_CONTENT);
       if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
         View content = w.getDecorView();
-        content.setTranslationY(a.dp(28));
+        content.animate().cancel();
+        content.setTranslationY(a.dp(a.expanded() ? 16 : 56));
+        content.setScaleX(.97f);
+        content.setScaleY(.97f);
         content.setAlpha(0);
         content
             .animate()
             .translationY(0)
+            .scaleX(1)
+            .scaleY(1)
             .alpha(1)
-            .setDuration(240)
+            .setDuration(320)
             .setInterpolator(new android.view.animation.PathInterpolator(.22f, .75f, .18f, 1))
             .start();
       }
     }
+  }
+
+  @Override
+  public void dismiss() {
+    if (dismissing) return;
+    Window window = getWindow();
+    if (!isShowing() || window == null || a.isFinishing()
+        || a.isDestroyed() || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
+      super.dismiss();
+      return;
+    }
+    dismissing = true;
+    View decor = window.getDecorView();
+    decor.animate().cancel();
+    decor.animate()
+        .translationY(a.dp(a.expanded() ? 12 : 40))
+        .scaleX(.98f).scaleY(.98f).alpha(0)
+        .setDuration(180)
+        .setInterpolator(new android.view.animation.PathInterpolator(.4f, 0, 1, 1))
+        .withEndAction(() -> SheetDialog.super.dismiss())
+        .start();
   }
 
   static class Action {

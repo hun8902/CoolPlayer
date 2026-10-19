@@ -626,11 +626,15 @@ public class MainActivity extends Activity {
         dock.addView(navigation(false));
       }
       libraryViewport.addView(dock, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
-      int dockSpace = dp(expanded() ? 84 : 140);
-      if (list != null && list.getParent() == body) {
-        list.setPadding(0, 0, 0, dockSpace);
-        list.setClipToPadding(false);
-      } else body.setPadding(0, 0, 0, dockSpace);
+      // Reserve the measured dock height, including enlarged accessibility text.
+      View scrollContent = list != null && list.getParent() == body ? list : body;
+      if (scrollContent instanceof ListView) ((ListView) scrollContent).setClipToPadding(false);
+      dock.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+        int bottom = b - t + dp(8);
+        if (scrollContent.getPaddingBottom() != bottom)
+          scrollContent.setPadding(scrollContent.getPaddingLeft(), scrollContent.getPaddingTop(),
+              scrollContent.getPaddingRight(), bottom);
+      });
     }
     updatePlayback();
   }
@@ -947,7 +951,7 @@ public class MainActivity extends Activity {
 
   void buildMini() {
     mini = row();
-    mini.setPadding(dp(10), dp(3), dp(6), dp(3));
+    mini.setPadding(dp(10), dp(8), dp(6), dp(8));
     mini.setBackground(shape(darkTheme ? 0xf2252932 : 0xf2ffffff, 26));
     mini.setElevation(dp(6));
     miniArt = new ImageView(this);
@@ -964,7 +968,10 @@ public class MainActivity extends Activity {
     miniTitle.setEllipsize(TextUtils.TruncateAt.END);
     miniArtist = text("Cool Player", 12, muted);
     miniArtist.setSingleLine();
-    miniArtist.setPadding(0, dp(5), 0, 0);
+    miniArtist.setEllipsize(TextUtils.TruncateAt.END);
+    miniTitle.setIncludeFontPadding(true);
+    miniArtist.setIncludeFontPadding(true);
+    miniArtist.setPadding(0, dp(2), 0, 0);
     labels.addView(miniTitle);
     labels.addView(miniArtist);
     labels.setOnClickListener(
@@ -977,7 +984,7 @@ public class MainActivity extends Activity {
           now = true;
           render();
         });
-    mini.addView(labels, new LinearLayout.LayoutParams(0, dp(48), 1));
+    mini.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
     miniPlay = icon("play", "재생 또는 일시정지", this::toggle);
     mini.addView(miniPlay);
     mini.addView(
@@ -987,7 +994,7 @@ public class MainActivity extends Activity {
             () -> {
               if (player != null) player.seekToNextMediaItem();
             }));
-    root.addView(mini, new LinearLayout.LayoutParams(-1, dp(64)));
+    root.addView(mini, new LinearLayout.LayoutParams(-1, -2));
     mini.setMinimumHeight(dp(64));
   }
 
@@ -1249,9 +1256,7 @@ public class MainActivity extends Activity {
         left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
         buildLyricsPanel(pane, t);
       } else {
-        LinearLayout pane = column();
-        left.addView(pane, new LinearLayout.LayoutParams(-1, 0, 1));
-        buildInlineQueue(pane);
+        buildArtwork(left, t);
       }
       buildTransport(left, t);
     }

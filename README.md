@@ -4,7 +4,7 @@
 
 **Mac과 Android에서 내 음악과 가사를 함께 듣는 플레이어입니다. Mac에서는 음원 정보 편집과 ALAC 변환도 지원합니다.**
 
-[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.11/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
+[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.12/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
 
 ## Android
 
@@ -122,7 +122,7 @@ GitHub Pages는 `main` 브랜치의 `docs/` 폴더를 게시합니다. Mac 다�
 안드로이드 앱 소스와 빌드 방법은 [android/README.md](android/README.md)에 있습니다. Android 8.1 이상을 대상으로 FLAC 재생, 앨범아트, 실시간 가사, 백그라운드 재생, 홈 화면 위젯과 재생목록을 구현했습니다. macOS 앱과는 별도 네이티브 프로젝트이며, 지원 범위와 설치 방법은 안드로이드 문서에서 확인할 수 있습니다.
 
 
-### 1.4.11 Android 업데이트
+### 1.4.12 Android 업데이트
 
 기존 셔플 버튼의 무작위 재생과 활성 표시를 정리하고, 반복 상태를 꺼짐·전체·한 곡으로 구분했습니다. 미니 플레이어는 화면 크기에 관계없이 하단에 고정되도록 배치를 수정했습니다.
 

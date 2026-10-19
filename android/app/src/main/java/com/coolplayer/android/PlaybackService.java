@@ -79,6 +79,26 @@ public class PlaybackService extends MediaSessionService {
 
   @Override
   public int onStartCommand(Intent intent, int flags, int id) {
+    // Widget PendingIntents deliver directly to the owner of the player. No transient
+    // controller can disconnect before the command reaches the playback thread.
+    if (intent != null && intent.getAction() != null) {
+      String action = intent.getAction();
+      String prefix = getPackageName() + ".widget.";
+      if (action.equals(prefix + "previous")) player.seekToPreviousMediaItem();
+      else if (action.equals(prefix + "next")) player.seekToNextMediaItem();
+      else if (action.equals(prefix + "toggle")) {
+        if (player.getPlayWhenReady()) player.pause();
+        else {
+          if (player.getPlaybackState() == Player.STATE_ENDED) player.seekTo(0);
+          player.prepare();
+          player.play();
+        }
+      }
+      if (action.startsWith(prefix)) {
+        saveQueue();
+        PlayerWidget.updateAll(this, player);
+      }
+    }
     if (intent != null && SLEEP.equals(intent.getAction())) {
       handler.removeCallbacks(sleep);
       long minutes = intent.getLongExtra("minutes", 0);
@@ -151,6 +171,10 @@ public class PlaybackService extends MediaSessionService {
   public void onDestroy() {
     handler.removeCallbacksAndMessages(null);
     saveQueue();
+    if (player != null) {
+      player.pause();
+      PlayerWidget.updateAll(this, player);
+    }
     if (session != null) session.release();
     if (player != null) player.release();
     super.onDestroy();

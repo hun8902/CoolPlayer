@@ -395,7 +395,7 @@ public class MainActivity extends Activity {
         icon.symbol = name;
         icon.tint = color;
         icon.extent = size;
-        icon.invalidate();
+        icon.postInvalidateOnAnimation();
       }
     }
   }
@@ -983,7 +983,7 @@ public class MainActivity extends Activity {
 
   void buildMini() {
     mini = row();
-    mini.setPadding(dp(10), dp(8), dp(6), dp(8));
+    mini.setPadding(dp(12), dp(10), dp(8), dp(10));
     mini.setBackground(dockSurface(26));
     mini.setElevation(0);
     miniArt = new ImageView(this);
@@ -993,7 +993,7 @@ public class MainActivity extends Activity {
     artwork(miniArt, current());
     mini.addView(miniArt, new LinearLayout.LayoutParams(dp(44), dp(44)));
     LinearLayout labels = column();
-    labels.setPadding(dp(12), 0, dp(8), 0);
+    labels.setPadding(dp(10), 0, dp(4), 0);
     miniTitle = text(tr("음악을 선택하세요"), 14, ink);
     miniTitle.setTypeface(null, Typeface.BOLD);
     miniTitle.setSingleLine();
@@ -1017,7 +1017,10 @@ public class MainActivity extends Activity {
           render();
         });
     mini.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
-    miniPlay = icon("play", "재생 또는 일시정지", this::toggle);
+    mini.addView(icon("previous", "이전 곡", () -> {
+      if (player != null) player.seekToPreviousMediaItem();
+    }));
+    miniPlay = icon("play", "재생", this::toggle);
     mini.addView(miniPlay);
     mini.addView(
         icon(
@@ -1051,7 +1054,7 @@ public class MainActivity extends Activity {
 
   void toggle() {
     if (player == null) return;
-    if (player.isPlaying()) player.pause();
+    if (player.getPlayWhenReady()) player.pause();
     else {
       if (player.getMediaItemCount() == 0 && !library.tracks.isEmpty()) play(library.tracks, 0);
       else {
@@ -1228,7 +1231,11 @@ public class MainActivity extends Activity {
       }
     }
     boolean wide = expanded();
-    LinearLayout top = row();
+    SwipeDismissLayout top = new SwipeDismissLayout(this);
+    top.setOrientation(LinearLayout.HORIZONTAL);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.moving = root;
+    top.close = () -> { now = false; render(); };
     top.addView(
         icon(
             "back",
@@ -1240,8 +1247,9 @@ public class MainActivity extends Activity {
     TextView title = text(tr("지금 재생 중"), 13, muted);
     title.setGravity(Gravity.CENTER);
     top.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
-    Space topBalance = new Space(this);
-    top.addView(topBalance, new LinearLayout.LayoutParams(dp(48), dp(48)));
+    top.addView(icon("more", "가사 검색 · 편집 · 내보내기", () -> {
+      if (current() != null) lyricsMenu(current());
+    }));
     root.addView(top);
     space(root, 8);
     LinearLayout stage = wide ? row() : column();
@@ -1506,17 +1514,7 @@ public class MainActivity extends Activity {
 
   void buildLyricsPanel(LinearLayout pane, Library.Track t) {
     pane.setPadding(dp(8), 0, dp(8), 0);
-    LinearLayout head = row();
     lyricLabel = text(tr("가사"), 16, muted);
-    head.addView(new Space(this), new LinearLayout.LayoutParams(0, dp(36), 1));
-    head.addView(
-        icon(
-            "more",
-            "가사 검색 · 편집 · 내보내기",
-            () -> {
-              if (current() != null) lyricsMenu(current());
-            }));
-    pane.addView(head);
     lyricScroll = new ScrollView(this);
     lyricScroll.setVerticalScrollBarEnabled(false);
     lyricScroll.setFillViewport(true);
@@ -1626,11 +1624,13 @@ public class MainActivity extends Activity {
     if (player == null) return;
     Library.Track t = current();
     String title = t == null ? "음악을 선택하세요" : t.title, artist = t == null ? "Cool Player" : t.artist;
-    boolean playing = player.isPlaying();
+    boolean playing = player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED;
     if (mini != null) {
       miniTitle.setText(title);
       miniArtist.setText(artist);
-      setIcon(miniPlay, playing ? "pause" : "play", ink, 24);
+      setIcon(miniPlay, playing ? "pause" : "play", ink, 26);
+      miniPlay.setContentDescription(playing ? "일시정지" : "재생");
+      miniPlay.setSelected(playing);
       if (miniArt != null && t != null && !t.art.equals(miniArt.getTag())) artwork(miniArt, t);
     }
     if (!now || timeline == null) return;

@@ -141,7 +141,12 @@ final class SheetDialog extends Dialog {
       buttons.addView(b, new LinearLayout.LayoutParams(-1, a.dp(50)));
     }
     surface.addView(buttons);
-    setContentView(surface);
+    SwipeDismissLayout dragHost = new SwipeDismissLayout(a);
+    dragHost.setOrientation(LinearLayout.VERTICAL);
+    dragHost.close = this::dismiss;
+    dragHost.addView(surface, new LinearLayout.LayoutParams(-1, -2));
+    setContentView(dragHost);
+    dragHost.moving = getWindow().getDecorView();
     Window window = getWindow();
     if (window != null) {
       window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
@@ -166,7 +171,7 @@ final class SheetDialog extends Dialog {
           (view, event) -> {
             view.getParent()
                 .requestDisallowInterceptTouchEvent(
-                    event.getAction() != MotionEvent.ACTION_UP
+                    view.canScrollVertically(-1) && event.getAction() != MotionEvent.ACTION_UP
                         && event.getAction() != MotionEvent.ACTION_CANCEL);
             return false;
           });

@@ -6,8 +6,6 @@ import android.content.*;
 import android.graphics.*;
 import android.widget.RemoteViews;
 import androidx.media3.common.*;
-import androidx.media3.session.*;
-import com.google.common.util.concurrent.ListenableFuture;
 
 public class PlayerWidget extends AppWidgetProvider {
   @Override
@@ -36,9 +34,9 @@ public class PlayerWidget extends AppWidgetProvider {
     v.setTextViewText(R.id.widget_artist, artist);
     android.content.SharedPreferences state = c.getSharedPreferences("widget", 0);
     if (player != null) state.edit()
-        .putBoolean("playing", player.isPlaying())
+        .putBoolean("playing", (player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED))
         .putString("art", player.getMediaMetadata().artworkUri == null ? "" : player.getMediaMetadata().artworkUri.getPath()).apply();
-    boolean playing = player != null ? player.isPlaying() : state.getBoolean("playing", false);
+    boolean playing = player != null ? (player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED) : state.getBoolean("playing", false);
     widgetIcon(v, R.id.widget_play, playing ? "pause" : "play");
     v.setContentDescription(R.id.widget_play, playing ? "일시정지" : "재생");
     widgetIcon(v, R.id.widget_previous, "previous");
@@ -89,20 +87,20 @@ public class PlayerWidget extends AppWidgetProvider {
     String[] actions = {"previous", "toggle", "next"};
     for (int i = 0; i < controls.length; i++) {
       Intent in =
-          new Intent(c, PlayerWidget.class).setAction(c.getPackageName() + "." + actions[i]);
+          new Intent(c, PlaybackService.class).setAction(c.getPackageName() + ".widget." + actions[i]);
       v.setOnClickPendingIntent(
           controls[i],
-          PendingIntent.getBroadcast(
+          PendingIntent.getService(
               c, i + 10, in, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
     for (int id : ids) {
       RemoteViews sized = new RemoteViews(v);
       android.os.Bundle options = m.getAppWidgetOptions(id);
       int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
-      int height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 160);
+      int height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 100);
       // On Android 12+ use actual launcher bounds rather than one fixed art size.
       if (android.os.Build.VERSION.SDK_INT >= 31 && layout == R.layout.widget) {
-        int artSize = Math.max(56, Math.min(112, Math.min(height - 32, width / 3)));
+        int artSize = Math.max(56, Math.min(196, Math.min(height - 32, width * 2 / 5)));
         sized.setViewLayoutWidth(R.id.widget_art, artSize, android.util.TypedValue.COMPLEX_UNIT_DIP);
         sized.setViewLayoutHeight(R.id.widget_art, artSize, android.util.TypedValue.COMPLEX_UNIT_DIP);
       }
@@ -118,36 +116,4 @@ public class PlayerWidget extends AppWidgetProvider {
     views.setImageViewBitmap(id, bitmap);
   }
 
-  @Override
-  public void onReceive(Context c, Intent intent) {
-    super.onReceive(c, intent);
-    String action = intent.getAction();
-    if (action == null || !action.startsWith(c.getPackageName() + ".")) return;
-    PendingResult pending = goAsync();
-    ListenableFuture<MediaController> future =
-        new MediaController.Builder(
-                c, new SessionToken(c, new ComponentName(c, PlaybackService.class)))
-            .buildAsync();
-    future.addListener(
-        () -> {
-          try {
-            MediaController p = future.get();
-            if (action.endsWith("previous")) p.seekToPreviousMediaItem();
-            else if (action.endsWith("next")) p.seekToNextMediaItem();
-            else {
-              if (p.isPlaying()) p.pause();
-              else {
-                p.prepare();
-                p.play();
-              }
-            }
-            updateAll(c, p);
-            p.release();
-          } catch (Exception ignored) {
-          } finally {
-            pending.finish();
-          }
-        },
-        new android.os.Handler(android.os.Looper.getMainLooper())::post);
-  }
 }

@@ -319,16 +319,9 @@ public class MainActivity extends Activity {
     b.setGravity(Gravity.CENTER);
     b.setPadding(dp(20), dp(10), dp(20), dp(10));
     b.setMinHeight(dp(48));
-    android.graphics.drawable.GradientDrawable glass =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            darkTheme ? new int[] {0xe63b414e, 0xe62b303b}
-                : new int[] {0xfaffffff, 0xe8e9eef6});
-    glass.setCornerRadius(dp(24));
-    glass.setStroke(dp(1), darkTheme ? 0x28ffffff : 0x407d8da8);
     b.setBackground(new android.graphics.drawable.RippleDrawable(
         android.content.res.ColorStateList.valueOf(darkTheme ? 0x28ffffff : 0x185370a0),
-        glass, shape(Color.WHITE, 24)));
+        shape(darkTheme ? 0xff303139 : 0xffedf0f5, 24), shape(Color.WHITE, 24)));
     if (android.animation.ValueAnimator.areAnimatorsEnabled()) {
       android.animation.StateListAnimator states = new android.animation.StateListAnimator();
       android.animation.AnimatorSet pressed = new android.animation.AnimatorSet();
@@ -2463,7 +2456,8 @@ public class MainActivity extends Activity {
     label.setPadding(dp(14), dp(22), 0, dp(8));
     parent.addView(label);
     LinearLayout group = column();
-    group.setBackground(shape(card, 18));
+    group.setBackground(shape(darkTheme ? 0xff202024 : Color.WHITE, 22));
+    group.setClipToOutline(true);
     parent.addView(group);
     return group;
   }
@@ -2505,6 +2499,33 @@ public class MainActivity extends Activity {
       }
       action.run();
     });
+    group.addView(row);
+  }
+
+  void settingSwitch(LinearLayout group, String title, boolean checked,
+      java.util.function.Consumer<Boolean> changed) {
+    if (group.getChildCount() > 0) {
+      View divider = new View(this);
+      divider.setBackgroundColor(darkTheme ? 0xff343438 : 0xffe8e8ed);
+      LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, 1);
+      line.setMargins(dp(16), 0, dp(16), 0);
+      group.addView(divider, line);
+    }
+    LinearLayout row = row();
+    row.setPadding(dp(16), dp(6), dp(16), dp(6));
+    row.setMinimumHeight(dp(54));
+    row.addView(text(tr(title), 15, ink), new LinearLayout.LayoutParams(0, -2, 1));
+    Switch toggle = new Switch(this);
+    toggle.setContentDescription(tr(title));
+    toggle.setShowText(false);
+    toggle.setChecked(checked);
+    toggle.setThumbTintList(android.content.res.ColorStateList.valueOf(Color.WHITE));
+    toggle.setTrackTintList(new android.content.res.ColorStateList(
+        new int[][] {new int[] {android.R.attr.state_checked}, new int[] {}},
+        new int[] {0xff34c759, darkTheme ? 0xff505158 : 0xffd7d9df}));
+    toggle.setOnCheckedChangeListener((v, value) -> changed.accept(value));
+    row.addView(toggle, new LinearLayout.LayoutParams(-2, dp(44)));
+    row.setOnClickListener(v -> toggle.toggle());
     group.addView(row);
   }
 
@@ -2571,23 +2592,8 @@ public class MainActivity extends Activity {
                       render();
                     })
                 .show());
-    settingRow(
-        appearance,
-        "lyrics",
-        "가사 자동 스크롤",
-        prefs.getBoolean("follow", true) ? "켬" : "끔",
-        () ->
-            new SheetDialog.Builder(this)
-                .setTitle("가사 자동 스크롤")
-                .setSingleChoiceItems(
-                    new String[] {"켜기", "끄기"},
-                    prefs.getBoolean("follow", true) ? 0 : 1,
-                    (d, w) -> {
-                      prefs.edit().putBoolean("follow", w == 0).apply();
-                      d.dismiss();
-                      render();
-                    })
-                .show());
+    settingSwitch(appearance, "가사 자동 스크롤", prefs.getBoolean("follow", true),
+        value -> prefs.edit().putBoolean("follow", value).apply());
     LinearLayout audio = settingsGroup(stack, "재생");
     String speed =
         player == null
@@ -2681,15 +2687,8 @@ public class MainActivity extends Activity {
     LinearLayout updateGroup = settingsGroup(stack, "앱 업데이트");
     settingRow(
         updateGroup, "repeat", "업데이트 확인", "현재 " + updates.version(), () -> updates.check(true));
-    settingRow(
-        updateGroup,
-        "settings",
-        "새 버전 자동 확인",
-        updates.automatic() ? "켬" : "끔",
-        () -> {
-          updates.toggleAutomatic();
-          render();
-        });
+    settingSwitch(updateGroup, "새 버전 자동 확인", updates.automatic(),
+        value -> { if (updates.automatic() != value) updates.toggleAutomatic(); });
     if (new java.io.File(getCacheDir(), "updates/Cool-Player-Android.apk").exists())
       settingRow(updateGroup, "download", "다운로드한 업데이트 설치", "", () -> updates.install());
     LinearLayout about = settingsGroup(stack, "Cool Player");

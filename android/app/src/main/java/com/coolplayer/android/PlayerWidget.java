@@ -43,7 +43,15 @@ public class PlayerWidget extends AppWidgetProvider {
     v.setContentDescription(R.id.widget_play, playing ? "일시정지" : "재생");
     widgetIcon(v, R.id.widget_previous, "previous");
     widgetIcon(v, R.id.widget_next, "next");
-    v.setImageViewResource(R.id.widget_art, R.drawable.brand);
+    Bitmap placeholder = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
+    Canvas placeholderCanvas = new Canvas(placeholder);
+    Paint placeholderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    placeholderPaint.setColor(0xffe0e6f0);
+    placeholderCanvas.drawRoundRect(new RectF(0, 0, 256, 256), 24, 24, placeholderPaint);
+    PlayerGlyph note = new PlayerGlyph("music", 0xff637da5, 100);
+    note.setBounds(78, 78, 178, 178);
+    note.draw(placeholderCanvas);
+    v.setImageViewBitmap(R.id.widget_art, placeholder);
     String art = state.getString("art", "");
     if (!art.isEmpty()) {
       BitmapFactory.Options options = new BitmapFactory.Options();
@@ -87,12 +95,24 @@ public class PlayerWidget extends AppWidgetProvider {
           PendingIntent.getBroadcast(
               c, i + 10, in, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
-    m.updateAppWidget(ids, v);
+    for (int id : ids) {
+      RemoteViews sized = new RemoteViews(v);
+      android.os.Bundle options = m.getAppWidgetOptions(id);
+      int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
+      int height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 160);
+      // On Android 12+ use actual launcher bounds rather than one fixed art size.
+      if (android.os.Build.VERSION.SDK_INT >= 31 && layout == R.layout.widget) {
+        int artSize = Math.max(56, Math.min(112, Math.min(height - 32, width / 3)));
+        sized.setViewLayoutWidth(R.id.widget_art, artSize, android.util.TypedValue.COMPLEX_UNIT_DIP);
+        sized.setViewLayoutHeight(R.id.widget_art, artSize, android.util.TypedValue.COMPLEX_UNIT_DIP);
+      }
+      m.updateAppWidget(id, sized);
+    }
   }
 
   static void widgetIcon(RemoteViews views, int id, String name) {
     Bitmap bitmap = Bitmap.createBitmap(72, 72, Bitmap.Config.ARGB_8888);
-    PlayerGlyph glyph = new PlayerGlyph(name, Color.WHITE, 72);
+    PlayerGlyph glyph = new PlayerGlyph(name, 0xff202633, 72);
     glyph.setBounds(0, 0, 72, 72);
     glyph.draw(new Canvas(bitmap));
     views.setImageViewBitmap(id, bitmap);

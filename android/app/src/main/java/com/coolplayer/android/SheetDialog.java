@@ -40,16 +40,7 @@ final class SheetDialog extends Dialog {
         };
     surface.setOrientation(LinearLayout.VERTICAL);
     surface.setPadding(a.dp(20), a.dp(12), a.dp(20), a.dp(16));
-    android.graphics.drawable.GradientDrawable glass =
-        new android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
-            new int[] {
-              (a.bg & 0x00ffffff) | 0xe8000000,
-              (a.bg & 0x00ffffff) | 0xf5000000
-            });
-    glass.setCornerRadius(a.dp(28));
-    glass.setStroke(a.dp(1), a.darkTheme ? 0x30ffffff : 0x80ffffff);
-    surface.setBackground(glass);
+    surface.setBackground(a.shape(a.darkTheme ? 0xff242428 : 0xfff7f7fa, 28));
     surface.setClipToOutline(true);
     TextView handle = a.text("", 1, a.muted);
     handle.setBackground(a.shape(a.muted, 2));
@@ -140,7 +131,13 @@ final class SheetDialog extends Dialog {
                 dismiss();
                 if (action.listener != null) action.listener.onClick(this, action.which);
               });
-      b.setTextColor(action.which == DialogInterface.BUTTON_POSITIVE ? a.accent : a.muted);
+      if (action.which == DialogInterface.BUTTON_POSITIVE) {
+        b.setBackground(a.shape(a.accent, 24));
+        b.setTextColor(a.darkTheme ? 0xff172031 : Color.WHITE);
+      } else {
+        b.setBackgroundColor(Color.TRANSPARENT);
+        b.setTextColor(a.accent);
+      }
       buttons.addView(b, new LinearLayout.LayoutParams(-1, a.dp(50)));
     }
     surface.addView(buttons);

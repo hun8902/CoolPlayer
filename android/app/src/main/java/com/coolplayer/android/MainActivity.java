@@ -422,12 +422,24 @@ public class MainActivity extends Activity {
     return v;
   }
 
+  android.graphics.drawable.GradientDrawable dockSurface(int radius) {
+    // Opaque material prevents unblurred list text from showing through the controls.
+    android.graphics.drawable.GradientDrawable surface =
+        new android.graphics.drawable.GradientDrawable(
+            android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,
+            darkTheme ? new int[] {0xff2b303a, 0xff252932}
+                : new int[] {0xffffffff, 0xfff5f7fb});
+    surface.setCornerRadius(dp(radius));
+    surface.setStroke(dp(1), darkTheme ? 0xff3d4451 : 0xffe2e7ef);
+    return surface;
+  }
+
   LinearLayout navigation(boolean rail) {
     LinearLayout nav = rail ? column() : row();
     if (!rail) {
       nav.setPadding(dp(5), dp(4), dp(5), dp(4));
-      nav.setBackground(shape(darkTheme ? 0xf2252932 : 0xf2ffffff, 30));
-      nav.setElevation(dp(8));
+      nav.setBackground(dockSurface(30));
+      nav.setElevation(0);
       nav.setClipToOutline(true);
     }
     String[] labels = {"곡", "앨범", "즐겨찾기", "목록", "설정"};
@@ -449,7 +461,10 @@ public class MainActivity extends Activity {
       PlayerGlyph glyph = new PlayerGlyph(symbols[i], tab.equals(label) ? accent : muted, dp(22));
       v.setCompoundDrawablesWithIntrinsicBounds(null, glyph, null, null);
       v.setCompoundDrawablePadding(dp(3));
-      if (!tab.equals(label)) v.setBackgroundColor(Color.TRANSPARENT);
+      v.setBackground(tab.equals(label)
+          ? shape(darkTheme ? 0xff353d4c : 0xffeaf0f8, 24)
+          : new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+      v.setTextColor(tab.equals(label) ? accent : muted);
       nav.addView(
           v,
           rail
@@ -976,8 +991,8 @@ public class MainActivity extends Activity {
   void buildMini() {
     mini = row();
     mini.setPadding(dp(10), dp(8), dp(6), dp(8));
-    mini.setBackground(shape(darkTheme ? 0xf2252932 : 0xf2ffffff, 26));
-    mini.setElevation(dp(6));
+    mini.setBackground(dockSurface(26));
+    mini.setElevation(0);
     miniArt = new ImageView(this);
     miniArt.setScaleType(ImageView.ScaleType.CENTER_CROP);
     miniArt.setBackground(shape(card, 10));

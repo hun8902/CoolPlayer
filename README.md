@@ -4,7 +4,7 @@
 
 **Mac과 Android에서 내 음악과 가사를 함께 듣는 플레이어입니다. Mac에서는 음원 정보 편집과 ALAC 변환도 지원합니다.**
 
-[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.13/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
+[홈페이지](https://hun8902.github.io/CoolPlayer/) · [Mac용 다운로드](https://github.com/hun8902/CoolPlayer/releases/download/v2.1.0/Cool-Player-Mac.zip) · [Android APK](https://github.com/hun8902/CoolPlayer/releases/download/android-v1.4.14/Cool-Player-Android.apk) · [업데이트 내역](https://github.com/hun8902/CoolPlayer/releases) · [문제 제보](https://github.com/hun8902/CoolPlayer/issues)
 
 ## Android
 

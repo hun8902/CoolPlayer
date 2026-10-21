@@ -39,23 +39,25 @@ final class SheetDialog extends Dialog {
           }
         };
     surface.setOrientation(LinearLayout.VERTICAL);
-    surface.setPadding(a.dp(20), a.dp(12), a.dp(20), a.dp(16));
-    surface.setBackground(a.shape(a.darkTheme ? 0xff242428 : 0xfff7f7fa, 28));
+    surface.setPadding(a.dp(20), a.dp(10), a.dp(20), a.dp(12));
+    surface.setBackground(a.shape(a.darkTheme ? 0xff1c1c1e : 0xfff2f2f7, 28));
     surface.setClipToOutline(true);
     TextView handle = a.text("", 1, a.muted);
     handle.setBackground(a.shape(a.muted, 2));
     LinearLayout.LayoutParams hp = new LinearLayout.LayoutParams(a.dp(32), a.dp(4));
     hp.gravity = Gravity.CENTER;
-    hp.bottomMargin = a.dp(12);
+    hp.bottomMargin = a.dp(6);
     surface.addView(handle, hp);
     LinearLayout header = a.row();
-    TextView title = a.text(spec.title == null ? "Cool Player" : spec.title, 21, a.ink);
+    TextView title = a.text(spec.title == null ? "Cool Player" : spec.title, 18, a.ink);
     title.setTypeface(null, Typeface.BOLD);
     title.setMaxLines(2);
     header.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-    header.addView(a.icon("back", "닫기", this::dismiss));
+    View close = a.icon("close", "닫기", this::cancel);
+    close.setBackground(a.shape(a.darkTheme ? 0xff363638 : 0xffe5e5ea, 22));
+    header.addView(close, new LinearLayout.LayoutParams(a.dp(36), a.dp(36)));
     surface.addView(header);
-    a.space(surface, 12);
+    a.space(surface, 16);
     ScrollView scroll =
         new ScrollView(a) {
           @Override
@@ -75,21 +77,22 @@ final class SheetDialog extends Dialog {
     if (!spec.flexible) surface.addView(scroll, new LinearLayout.LayoutParams(-1, -2));
     if (spec.message != null) {
       TextView message = a.text(spec.message, 15, a.muted);
-      message.setLineSpacing(a.dp(5), 1.1f);
+      message.setLineSpacing(a.dp(3), 1.05f);
       message.setPadding(a.dp(4), a.dp(4), a.dp(4), a.dp(18));
       content.addView(message);
     }
     if (spec.items != null) {
       LinearLayout group = a.column();
-      group.setBackground(a.shape(a.card, 18));
+      group.setBackground(a.shape(a.darkTheme ? 0xff2c2c2e : Color.WHITE, 18));
+      group.setClipToOutline(true);
       for (int i = 0; i < spec.items.length; i++) {
         final int index = i;
         LinearLayout row = a.row();
         row.setPadding(a.dp(16), a.dp(8), a.dp(12), a.dp(8));
-        row.setMinimumHeight(a.dp(56));
-        TextView text = a.text(spec.items[i], 16, a.ink);
+        row.setMinimumHeight(a.dp(48));
+        TextView text = a.text(spec.items[i], 15, a.ink);
         row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
-        TextView mark = a.text(spec.selected == i ? "✓" : spec.single ? "" : "›", 18, a.accent);
+        TextView mark = a.text(spec.selected == i ? "✓" : spec.navigation ? "›" : "", 16, spec.selected == i ? a.accent : a.muted);
         row.addView(mark);
         row.setBackground(
             new android.graphics.drawable.RippleDrawable(
@@ -106,7 +109,7 @@ final class SheetDialog extends Dialog {
         group.addView(row);
         if (i < spec.items.length - 1) {
           View divider = new View(a);
-          divider.setBackgroundColor(a.darkTheme ? 0xff343944 : 0xffdfe4eb);
+          divider.setBackgroundColor(a.darkTheme ? 0xff3a3a3c : 0xffe5e5ea);
           LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, 1);
           line.leftMargin = a.dp(16);
           group.addView(divider, line);
@@ -123,6 +126,7 @@ final class SheetDialog extends Dialog {
     }
     LinearLayout buttons = a.column();
     for (Action action : spec.actions) {
+      if (action.listener == null && (action.label.equals(a.tr("닫기")) || action.label.equals(a.tr("확인")))) continue;
       a.space(buttons, 8);
       TextView b =
           a.button(
@@ -136,7 +140,7 @@ final class SheetDialog extends Dialog {
         b.setTextColor(a.darkTheme ? 0xff172031 : Color.WHITE);
       } else {
         b.setBackgroundColor(Color.TRANSPARENT);
-        b.setTextColor(a.accent);
+        b.setTextColor(action.label.contains("비우기") || action.label.contains("삭제") ? 0xffff453a : a.accent);
       }
       buttons.addView(b, new LinearLayout.LayoutParams(-1, a.dp(50)));
     }
@@ -257,7 +261,7 @@ final class SheetDialog extends Dialog {
     String title, message;
     View view;
     String[] items;
-    boolean single, flexible;
+    boolean single, flexible, navigation;
     int selected = -1;
     DialogInterface.OnClickListener select;
     final ArrayList<Action> actions = new ArrayList<>();
@@ -292,6 +296,11 @@ final class SheetDialog extends Dialog {
       for (int i = 0; i < items.length; i++) items[i] = a.tr(items[i]);
       select = listener;
       return this;
+    }
+
+    Builder setNavigationItems(String[] s, DialogInterface.OnClickListener listener) {
+      navigation = true;
+      return setItems(s, listener);
     }
 
     Builder setSingleChoiceItems(String[] s, int choice, DialogInterface.OnClickListener listener) {

@@ -21,7 +21,7 @@ public class PlaylistWidgetService extends RemoteViewsService {
       public int getCount() { return names.size(); }
       public RemoteViews getViewAt(int position) {
         if (position < 0 || position >= names.size()) return null;
-        RemoteViews v = new RemoteViews(getPackageName(), R.layout.widget_playlist_row);
+        RemoteViews v = new RemoteViews(getPackageName(), intent.getBooleanExtra("compact", false) ? R.layout.widget_playlist_row_small : R.layout.widget_playlist_row);
         v.setTextViewText(R.id.playlist_name, names.get(position));
         v.setTextViewText(R.id.playlist_count, counts.get(position) + "곡");
         v.setOnClickFillInIntent(R.id.playlist_row, new Intent().putExtra("playlist", names.get(position)));

@@ -24,6 +24,10 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/player_widget_square"/>
         </receiver>
         <service android:name=".PlaylistWidgetService" android:permission="android.permission.BIND_REMOTEVIEWS" android:exported="false"/>
+        <receiver android:name=".SmallPlaylistWidget" android:label="Cool Player · 작은 재생목록" android:exported="false">
+            <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/playlist_widget_small"/>
+        </receiver>
         <receiver android:name=".PlaylistWidget" android:label="Cool Player · 재생목록" android:exported="false">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/playlist_widget"/>

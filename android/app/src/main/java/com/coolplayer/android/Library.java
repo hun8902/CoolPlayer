@@ -68,7 +68,7 @@ final class Library {
   Library(Context c) {
     context = c.getApplicationContext();
     load();
-    if (!context.getSharedPreferences("settings", 0).getBoolean("experienceSongsV3", false)) {
+    if (!context.getSharedPreferences("settings", 0).getBoolean("experienceSongsV4", false)) {
       try {
         Track first = find("cool-player-welcome");
         if (first == null) {
@@ -76,16 +76,15 @@ final class Library {
           first.lyrics = bundledLyrics("amazing-grace.lrc"); tracks.add(first);
         }
         if (first.art.isEmpty()) first.art = sampleCover("grace", "AMAZING", "GRACE", false);
-        Track second = find("cool-player-experience-twinkle");
+        Track second = find("cool-player-experience-morning-blue");
         if (second == null) {
-          second = bundledTrack("cool-player-experience-twinkle", "twinkle.ogg", "Twinkle, Twinkle, Little Star", "CommandSpry", "OGG", 24567);
-          second.art = sampleCover("twinkle", "TWINKLE", "LITTLE STAR", true);
+          second = bundledTrack("cool-player-experience-morning-blue", "morning-blue.mp3", "Morning Blue", "Josh Woodward", "MP3", 244872);
+          second.art = sampleCover("morning-blue", "MORNING", "BLUE", false);
           tracks.add(second);
         }
-        Track old = find("cool-player-experience-auld");
-        if (old != null) tracks.remove(old);
+        tracks.removeIf(track -> track.id.equals("cool-player-experience-auld") || track.id.equals("cool-player-experience-twinkle"));
         for (ArrayList<String> ids : playlists.values()) {
-          for (int i = 0; i < ids.size(); i++) if (ids.get(i).equals("cool-player-experience-auld")) ids.set(i, second.id);
+          for (int i = 0; i < ids.size(); i++) if (ids.get(i).equals("cool-player-experience-auld") || ids.get(i).equals("cool-player-experience-twinkle")) ids.set(i, second.id);
         }
         boolean hasExperience = false;
         for (ArrayList<String> ids : playlists.values()) if (ids.contains(first.id) && ids.contains(second.id)) hasExperience = true;
@@ -95,7 +94,7 @@ final class Library {
           playlists.put(name, new ArrayList<>(Arrays.asList(first.id, second.id)));
         }
         save();
-        context.getSharedPreferences("settings", 0).edit().putBoolean("experienceSongsV3", true).apply();
+        context.getSharedPreferences("settings", 0).edit().putBoolean("experienceSongsV4", true).apply();
       } catch (IOException ignored) { }
     }
   }

@@ -1730,7 +1730,7 @@ public class MainActivity extends Activity {
   void showQueue() {
     if (player == null) return;
     LinearLayout panel = column();
-    TextView summary = text(tr("곡을 누르면 재생 · 메뉴에서 순서 변경"), 12, muted);
+    TextView summary = text(tr("다음 재생"), 13, muted);
     summary.setPadding(0, 0, 0, dp(12));
     panel.addView(summary);
     ListView queue = new ListView(this);
@@ -2111,7 +2111,7 @@ public class MainActivity extends Activity {
 
   void autoLyrics(Library.Track t) {
     if (!lyricRequests.add(t.id)) return;
-    boolean bundled = t.id.equals("cool-player-experience-twinkle");
+    boolean bundled = t.id.equals("cool-player-experience-morning-blue");
     LinearLayout status = row();
     status.setPadding(dp(4), dp(12), dp(4), dp(16));
     ProgressBar spinner = new ProgressBar(this);
@@ -2126,7 +2126,7 @@ public class MainActivity extends Activity {
     progress.show();
     io.execute(() -> {
       try {
-        String raw = bundled ? library.bundledLyrics("twinkle.lrc") : Lyrics.automatic(t);
+        String raw = bundled ? library.bundledLyrics("morning-blue.lrc") : Lyrics.automatic(t);
         runOnUiThread(() -> {
           lyricRequests.remove(t.id);
           if (destroyed || cancelled[0]) return;
@@ -2560,18 +2560,62 @@ public class MainActivity extends Activity {
 
   void showInfoAsset(String title, String asset) {
     try {
-      TextView copy = text(library.bundledLyrics(asset), 15, ink);
-      copy.setTextIsSelectable(true);
-      copy.setAutoLinkMask(android.text.util.Linkify.WEB_URLS);
-      copy.setLineSpacing(dp(6), 1.1f);
-      copy.setPadding(dp(4), dp(8), dp(4), dp(20));
-      new SheetDialog.Builder(this).setTitle(title).setView(copy).setPositiveButton("닫기", null).show();
+      LinearLayout sections = column();
+      boolean guide = asset.startsWith("guide-");
+      if (guide) {
+        String imagePath = "guide/" + asset.substring(6, asset.indexOf('.')) + ".png";
+        android.graphics.Bitmap screenshot;
+        try (java.io.InputStream imageStream = getAssets().open(imagePath)) {
+          screenshot = android.graphics.BitmapFactory.decodeStream(imageStream);
+        }
+        ImageView preview = new ImageView(this);
+        preview.setImageBitmap(screenshot);
+        preview.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        preview.setContentDescription(title + " 화면 예시, 누르면 확대");
+        preview.setBackground(shape(darkTheme ? 0xff2c2c2e : Color.WHITE, 18));
+        preview.setPadding(dp(8), dp(8), dp(8), dp(8));
+        sections.addView(preview, new LinearLayout.LayoutParams(-1, dp(260)));
+        TextView hint = text("실제 앱 화면 · 누르면 크게 보기", 12, muted);
+        hint.setGravity(Gravity.CENTER);
+        hint.setPadding(0, dp(8), 0, dp(14));
+        sections.addView(hint);
+        preview.setOnClickListener(v -> {
+          ImageView full = new ImageView(this);
+          full.setImageBitmap(screenshot);
+          full.setAdjustViewBounds(true);
+          full.setScaleType(ImageView.ScaleType.FIT_CENTER);
+          new SheetDialog.Builder(this).setTitle(title).setView(full).show();
+        });
+      }
+      int step = 0;
+      String source = library.bundledLyrics(asset);
+      for (String section : source.split("\\n\\s*\\n")) {
+        LinearLayout cardView = column();
+        cardView.setPadding(dp(16), dp(14), dp(16), dp(14));
+        cardView.setBackground(shape(darkTheme ? 0xff2c2c2e : Color.WHITE, 18));
+        int split = section.indexOf('\n');
+        if (split > 0 && section.substring(0, split).length() < 45) {
+          TextView heading = text((guide ? (++step) + "  " : "") + section.substring(0, split).replaceFirst("^\\d+\\.\\s*", ""), 16, ink);
+          heading.setTypeface(null, Typeface.BOLD);
+          cardView.addView(heading);
+          space(cardView, 8);
+          section = section.substring(split + 1);
+        }
+        TextView copy = text(section, 14, muted);
+        copy.setTextIsSelectable(true);
+        copy.setAutoLinkMask(android.text.util.Linkify.WEB_URLS);
+        copy.setLineSpacing(dp(3), 1.1f);
+        cardView.addView(copy);
+        sections.addView(cardView, new LinearLayout.LayoutParams(-1, -2));
+        space(sections, 12);
+      }
+      new SheetDialog.Builder(this).setTitle(title).setView(sections).show();
     } catch (java.io.IOException e) { toast("안내를 불러오지 못했습니다"); }
   }
 
   void showUserGuide() {
     String[] topics = {"음악 가져오기와 보관함", "플레이어와 제스처", "가사 가져오기와 타이밍", "재생목록과 위젯", "설정과 업데이트", "체험곡 사용하기"};
-    new SheetDialog.Builder(this).setTitle("사용법").setItems(topics,
+    new SheetDialog.Builder(this).setTitle("사용법").setNavigationItems(topics,
         (dialog, index) -> showInfoAsset(topics[index], "guide-" + index + ".txt")).show();
   }
 
@@ -2699,8 +2743,8 @@ public class MainActivity extends Activity {
           android.appwidget.AppWidgetManager widgets =
               android.appwidget.AppWidgetManager.getInstance(this);
           new SheetDialog.Builder(this).setTitle("위젯 선택")
-              .setItems(new String[]{"가로형 플레이어", "앨범형 플레이어", "재생목록"}, (dialog, index) -> {
-                Class<?> type = index == 0 ? PlayerWidget.class : index == 1 ? SquarePlayerWidget.class : PlaylistWidget.class;
+              .setItems(new String[]{"가로형 플레이어", "앨범형 플레이어", "재생목록", "작은 재생목록"}, (dialog, index) -> {
+                Class<?> type = index == 0 ? PlayerWidget.class : index == 1 ? SquarePlayerWidget.class : index == 2 ? PlaylistWidget.class : SmallPlaylistWidget.class;
                 if (widgets.isRequestPinAppWidgetSupported()) widgets.requestPinAppWidget(new ComponentName(this, type), null, null);
                 else toast("홈 화면을 길게 눌러 Cool Player 위젯을 선택하세요");
               }).show();
@@ -2738,10 +2782,9 @@ public class MainActivity extends Activity {
             new SheetDialog.Builder(this)
                 .setTitle("데이터와 저장")
                 .setMessage(
-                    "음원은 기기에서 재생됩니다. 가사 검색 시 곡명과 가수를 Bugs와 LRCLIB로 전송합니다.\n\n"
-                        + "선택한 앨범아트는 앱 보관함에 저장되며 원본 음원 파일에는 쓰지 않습니다. 이미지 주소로 가져오기는 입력한 주소에"
-                        + " 접속합니다.\n\n"
-                        + "앱 삭제 시 보관함, 가사, 변경한 앨범아트가 함께 삭제됩니다.")
+                    "내 음악\n선택한 원본 음악 파일은 기존 폴더에 보관됩니다. 앱에서 원본 파일을 임의로 삭제하지 않습니다.\n\n"
+                        + "가사 보관\n가사 메뉴의 ‘가사 파일 내보내기’에서 원하는 폴더에 LRC 또는 TXT 파일로 보관할 수 있습니다.\n\n"
+                        + "앱 보관함\n재생목록과 앱에서 편집한 정보는 앱 전용 공간에 저장됩니다. 앱을 제거하기 전 보관할 가사는 파일로 내보내 주세요.")
                 .setPositiveButton("확인", null)
                 .show());
     settingRow(

@@ -7,9 +7,10 @@ Copyright © 2026 Cool Player.
 Amazing Grace — Rocks From The Garden (Joannie: vocal, Randy: guitar), 2006-06-03. Wikimedia Commons의 PD-author로 공개된 녹음. 첫 절 37초 발췌, 페이드 및 MP3 변환. 원문 곡과 가사는 public domain.
 https://commons.wikimedia.org/wiki/File:Amazing_Grace_with_vocals_and_guitar_by_Rocks_From_The_Garden_-_20060603.ogg
 
-Twinkle, Twinkle, Little Star — CommandSpry, 2012-07-16. CC BY-SA 3.0. 원본 합성 보컬 OGG를 변경 없이 포함했습니다. 제작자가 앱을 보증한다는 의미는 아닙니다. 원문 가사는 Jane Taylor의 The Star (1806), public domain. 동기화 시간 정보는 Cool Player에서 작성하며 CC BY-SA 3.0으로 제공합니다.
-https://commons.wikimedia.org/wiki/File:Twinkle_twinkle_little_star_(vocal).ogg
-https://creativecommons.org/licenses/by-sa/3.0/
+Morning Blue — Josh Woodward, The Simple Life, Part 1 (2008). CC BY 3.0 US. 원본 OGG 녹음을 MP3로 변환했습니다. 곡과 가사: Josh Woodward. 동기화 시간 정보: Cool Player. 제작자가 앱을 보증한다는 의미는 아닙니다.
+https://www.joshwoodward.com/
+https://commons.wikimedia.org/wiki/File:Josh_Woodward_-_The_Simple_Life,_Part_1_-_08_-_Morning_Blue.ogg
+https://creativecommons.org/licenses/by/3.0/us/
 
 두 체험곡의 커버는 Cool Player가 작성한 기하학 그래픽으로 원래 음반 커버가 아닙니다.
 
@@ -21,6 +22,6 @@ https://github.com/androidx/androidx
 https://github.com/google/guava
 
 가사 검색
-검색 시 곡명과 가수 정보가 가사 제공 서비스로 전송됩니다. 검색 결과의 권리는 각 권리자에게 있으며 서비스별 이용 조건이 적용됩니다.
+검색 결과의 권리는 각 권리자에게 있으며 서비스별 이용 조건이 적용됩니다.
 https://lrclib.net
 https://music.bugs.co.kr

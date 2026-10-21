@@ -9,8 +9,8 @@ android {
         applicationId (project.hasProperty('compatibilityPackage') ? 'io.github.hun8902.coolplayer.limited' : 'com.coolplayer.android')
         minSdk 27
         targetSdk 36
-        versionCode 19
-        versionName '1.4.14'
+        versionCode 20
+        versionName '1.4.15'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {

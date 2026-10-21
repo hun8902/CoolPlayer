@@ -94,7 +94,7 @@ public class PlayerWidget extends AppWidgetProvider {
               c, i + 10, in, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
     for (int id : ids) {
-      RemoteViews sized = new RemoteViews(v);
+      RemoteViews sized = android.os.Build.VERSION.SDK_INT >= 28 ? new RemoteViews(v) : v.clone();
       android.os.Bundle options = m.getAppWidgetOptions(id);
       int width = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 250);
       int height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 100);

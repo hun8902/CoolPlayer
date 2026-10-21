@@ -236,6 +236,8 @@ public class MainActivity extends Activity {
     super.onDestroy();
   }
 
+  // API 33+ uses the registered OnBackInvokedCallback; this handles older devices.
+  @android.annotation.SuppressLint("GestureBackNavigation")
   @Override
   public void onBackPressed() {
     navigateBack();
@@ -306,7 +308,7 @@ public class MainActivity extends Activity {
   TextView text(String s, int size, int color) {
     TextView v = new TextView(this);
     v.setIncludeFontPadding(false);
-    v.setText(s);
+    v.setText(tr(s));
     v.setTextSize(size);
     v.setTextColor(color);
     v.setGravity(Gravity.CENTER_VERTICAL);
@@ -1065,6 +1067,54 @@ public class MainActivity extends Activity {
     }
   }
 
+  void confirmDeleteFile(Library.Track t) {
+    String lyrics = t.lyricUri.isEmpty()
+        ? "앱에 저장된 가사도 함께 삭제됩니다. 별도로 내보낸 가사 파일은 삭제하지 않습니다."
+        : "연결된 가사 파일과 앱에 저장된 가사도 함께 삭제됩니다.";
+    new SheetDialog.Builder(this).setTitle("원본 파일 삭제")
+        .setMessage(t.title + "\n" + t.artist + "\n\n" + tr("음악 파일을 기기에서 삭제합니다. 앱에서 복구할 수 없습니다.")
+            + "\n\n" + tr(lyrics))
+        .setNegativeButton("취소", null)
+        .setPositiveButton("삭제", (d, w) -> {
+          // Stop only the selected source before deleting, including duplicate references.
+          if (player != null) for (int i = player.getMediaItemCount() - 1; i >= 0; i--) {
+            Library.Track queued = library.find(player.getMediaItemAt(i).mediaId);
+            if (queued != null && queued.uri.equals(t.uri)) player.removeMediaItem(i);
+          }
+          io.execute(() -> {
+            try {
+              deleteDocument(t.uri);
+            } catch (Exception e) {
+              toast("파일을 삭제하지 못했습니다. 폴더를 다시 선택해 쓰기 권한을 허용해 주세요.");
+              return;
+            }
+            boolean lyricFailed = false;
+            if (!t.lyricUri.isEmpty() && !t.lyricUri.equals(t.uri)) {
+              try { deleteDocument(t.lyricUri); } catch (Exception e) { lyricFailed = true; }
+            }
+            final boolean partial = lyricFailed;
+            runOnUiThread(() -> {
+              ArrayList<String> removed = new ArrayList<>();
+              for (Library.Track item : library.tracks) if (item.uri.equals(t.uri)) removed.add(item.id);
+              library.tracks.removeIf(item -> removed.contains(item.id));
+              for (ArrayList<String> ids : library.playlists.values()) ids.removeAll(removed);
+              library.save(); render();
+              toast(partial ? "음악은 삭제했지만 연결된 가사 파일은 삭제하지 못했습니다." : "음악 파일과 저장된 가사를 삭제했습니다");
+            });
+          });
+        }).show();
+  }
+
+  void deleteDocument(String location) throws Exception {
+    Uri uri = Uri.parse(location);
+    if ("file".equals(uri.getScheme())) {
+      if (!new File(uri.getPath()).delete()) throw new IOException("Delete failed");
+    } else if (!android.provider.DocumentsContract.isDocumentUri(this, uri)
+        || !android.provider.DocumentsContract.deleteDocument(getContentResolver(), uri)) {
+      throw new IOException("Delete unsupported");
+    }
+  }
+
   void trackMenu(Library.Track t) {
     ArrayList<String> choices =
         new ArrayList<>(
@@ -1079,11 +1129,13 @@ public class MainActivity extends Activity {
                 "보관함에서 제거"));
     choices.add("앨범아트 가져오기 · 변경");
     if (!playlistFilter.isEmpty()) choices.add("이 재생목록에서 제거");
+    choices.add("원본 파일 삭제");
     new SheetDialog.Builder(this)
         .setTitle(t.title)
         .setItems(
             choices.toArray(new String[0]),
             (d, w) -> {
+              if (w == choices.size() - 1) { confirmDeleteFile(t); return; }
               switch (w) {
                 case 0:
                   t.favorite = !t.favorite;
@@ -1980,6 +2032,7 @@ public class MainActivity extends Activity {
                       w == 0 ? Intent.ACTION_OPEN_DOCUMENT : Intent.ACTION_OPEN_DOCUMENT_TREE);
               in.addFlags(
                   Intent.FLAG_GRANT_READ_URI_PERMISSION
+                      | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                       | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
               if (w == 0) {
                 in.setType("audio/*");
@@ -2020,7 +2073,9 @@ public class MainActivity extends Activity {
         try {
           getContentResolver()
               .takePersistableUriPermission(
-                  u, data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                  u, (data.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
+                      ? Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                      : Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (Exception ignored) {
         }
       importing = true;
@@ -2049,6 +2104,7 @@ public class MainActivity extends Activity {
                         if (saved.uri.equals(incoming.uri)) {
                           exists = true;
                           if (saved.lyrics.isEmpty()) saved.lyrics = incoming.lyrics;
+                          if (!incoming.lyricUri.isEmpty()) saved.lyricUri = incoming.lyricUri;
                           if (!incoming.id.equals(saved.id) && !incoming.art.isEmpty())
                             new File(incoming.art).delete();
                           break;
@@ -2071,7 +2127,14 @@ public class MainActivity extends Activity {
             () -> {
               try {
                 String raw = library.read(uri);
-                runOnUiThread(() -> applyLyrics(t, raw));
+                runOnUiThread(() -> {
+                  t.lyricUri = uri.toString();
+                  try { getContentResolver().takePersistableUriPermission(uri, (data.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0
+                      ? Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                      : Intent.FLAG_GRANT_READ_URI_PERMISSION); }
+                  catch (Exception ignored) { }
+                  applyLyrics(t, raw);
+                });
               } catch (Exception e) {
                 toast("가사 파일을 읽지 못했습니다");
               }
@@ -2170,6 +2233,7 @@ public class MainActivity extends Activity {
                 Intent in =
                     new Intent(Intent.ACTION_OPEN_DOCUMENT)
                         .setType("*/*")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
                         .addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(in, 12);
               } else if (w == 3) {
@@ -2548,11 +2612,75 @@ public class MainActivity extends Activity {
 
   String tr(String source) { return AppLanguage.text(this, source); }
 
+  void scanDuplicates() {
+    android.widget.ProgressBar spinner = new android.widget.ProgressBar(this);
+    SheetDialog loading = new SheetDialog.Builder(this).setTitle("곡 중복 정리")
+        .setMessage("같은 파일 내용을 가진 곡을 찾고 있습니다. 자동으로 삭제하지 않습니다.")
+        .setView(spinner).show();
+    java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean(false);
+    loading.setOnCancelListener(d -> cancelled.set(true));
+    ArrayList<Library.Track> snapshot = new ArrayList<>(library.tracks);
+    io.execute(() -> {
+      java.util.LinkedHashMap<String, ArrayList<Library.Track>> groups = new java.util.LinkedHashMap<>();
+      int unreadable = 0;
+      for (Library.Track track : snapshot) {
+        if (cancelled.get() || destroyed) return;
+        try (InputStream stream = getContentResolver().openInputStream(Uri.parse(track.uri))) {
+          if (stream == null) throw new IOException();
+          java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+          byte[] buffer = new byte[65536]; int count;
+          while ((count = stream.read(buffer)) != -1) {
+            if (cancelled.get() || destroyed) return;
+            digest.update(buffer, 0, count);
+          }
+          String key = android.util.Base64.encodeToString(digest.digest(), android.util.Base64.NO_WRAP);
+          ArrayList<Library.Track> group = groups.computeIfAbsent(key, k -> new ArrayList<>());
+          boolean sameUri = false;
+          for (Library.Track existing : group) if (existing.uri.equals(track.uri)) sameUri = true;
+          if (!sameUri) group.add(track);
+        } catch (Exception e) { unreadable++; }
+      }
+      ArrayList<ArrayList<Library.Track>> duplicates = new ArrayList<>();
+      for (ArrayList<Library.Track> group : groups.values()) if (group.size() > 1) duplicates.add(group);
+      final int skipped = unreadable;
+      runOnUiThread(() -> {
+        if (cancelled.get() || destroyed) return;
+        loading.dismiss();
+        if (duplicates.isEmpty()) {
+          new SheetDialog.Builder(this).setTitle("곡 중복 정리")
+              .setMessage(tr("내용이 같은 중복 파일이 없습니다.") + (skipped > 0 ? "\n" + skipped + " " + tr("개 파일을 읽지 못했습니다") : "")).show();
+          return;
+        }
+        String[] labels = new String[duplicates.size()];
+        for (int i = 0; i < labels.length; i++) labels[i] = duplicates.get(i).get(0).title + " · " + duplicates.get(i).size();
+        new SheetDialog.Builder(this).setTitle("곡 중복 정리")
+            .setMessage("내용이 일치하는 파일만 표시합니다. 그룹을 열어 삭제할 파일을 직접 선택하세요.")
+            .setNavigationItems(labels, (d, index) -> {
+              ArrayList<Library.Track> group = duplicates.get(index);
+              String[] files = new String[group.size()];
+              for (int i = 0; i < files.length; i++) files[i] = group.get(i).title + "\n" + Uri.decode(group.get(i).uri);
+              new SheetDialog.Builder(this).setTitle("삭제할 파일 선택")
+                  .setItems(files, (dd, selected) -> confirmDeleteFile(group.get(selected))).show();
+            }).show();
+      });
+    });
+  }
+
+  void showAppEqualizer() {
+    int selected = getSharedPreferences("settings", 0).getInt("eqPreset", 0);
+    new SheetDialog.Builder(this).setTitle("앱 이퀄라이저")
+        .setMessage("선택한 음색은 Cool Player 재생에 적용됩니다.")
+        .setSingleChoiceItems(AppEqualizer.NAMES, selected, (dialog, index) -> {
+          getSharedPreferences("settings", 0).edit().putInt("eqPreset", index).apply();
+          dialog.dismiss(); render();
+        }).show();
+  }
+
   void chooseLanguage() {
-    String[] codes = {"system", "ko", "en", "ja"};
+    String[] codes = AppLanguage.CODES;
     int selected = Arrays.asList(codes).indexOf(getSharedPreferences("settings", 0).getString("language", "system"));
     new SheetDialog.Builder(this).setTitle("언어")
-        .setSingleChoiceItems(new String[]{tr("기기 설정"), "한국어", "English", "日本語"}, selected, (d, w) -> {
+        .setSingleChoiceItems(AppLanguage.NAMES, selected, (d, w) -> {
           getSharedPreferences("settings", 0).edit().putString("language", codes[w]).apply();
           d.dismiss(); render();
         }).show();
@@ -2655,7 +2783,7 @@ public class MainActivity extends Activity {
     SharedPreferences prefs = getSharedPreferences("settings", 0);
     LinearLayout appearance = settingsGroup(stack, "화면과 가사");
     settingRow(appearance, "lyrics", "가사 글자 크기", String.valueOf(lyricFontSize()), this::chooseLyricSize);
-    settingRow(appearance, "album", tr("언어"), getSharedPreferences("settings", 0).getString("language", "system"), this::chooseLanguage);
+    settingRow(appearance, "language", tr("언어"), AppLanguage.displayName(this), this::chooseLanguage);
     String[] modes = {"기기 설정", "라이트", "다크"};
     int selected =
         Arrays.asList("system", "light", "dark").indexOf(prefs.getString("theme", "system"));
@@ -2729,27 +2857,10 @@ public class MainActivity extends Activity {
                       render();
                     })
                 .show());
-    settingRow(
-        audio,
-        "settings",
-        "기기 이퀄라이저",
-        "",
-        () -> {
-          Intent eq =
-              new Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
-                  .putExtra(AudioEffect.EXTRA_PACKAGE_NAME, getPackageName())
-                  .putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
-                  .putExtra(
-                      AudioEffect.EXTRA_AUDIO_SESSION,
-                      getSharedPreferences("playback", 0).getInt("audioSession", 0));
-          try {
-            startActivity(eq);
-          } catch (ActivityNotFoundException e) {
-            toast("이 기기에는 시스템 이퀄라이저가 없습니다");
-          }
-        });
+    settingRow(audio, "eq", "앱 이퀄라이저", "", this::showAppEqualizer);
     LinearLayout libraryGroup = settingsGroup(stack, "보관함과 홈 화면");
     settingRow(libraryGroup, "add", "음악 가져오기", "", this::importMenu);
+    settingRow(libraryGroup, "sort", "곡 중복 정리", "", this::scanDuplicates);
     settingRow(
         libraryGroup,
         "album",

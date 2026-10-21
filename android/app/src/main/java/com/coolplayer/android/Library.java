@@ -15,6 +15,7 @@ import org.json.*;
 final class Library {
   static class Track {
     String id, uri, title, artist, album, art = "", format = "", lyrics = "";
+    String lyricUri = "";
     long duration;
     int sampleRate, bitDepth;
     boolean favorite;
@@ -31,6 +32,7 @@ final class Library {
       j.put("duration", duration);
       j.put("favorite", favorite);
       j.put("lyrics", lyrics);
+      j.put("lyricUri", lyricUri);
       j.put("sampleRate", sampleRate);
       j.put("bitDepth", bitDepth);
       return j;
@@ -48,6 +50,7 @@ final class Library {
       t.duration = j.optLong("duration");
       t.favorite = j.optBoolean("favorite");
       t.lyrics = j.optString("lyrics");
+      t.lyricUri = j.optString("lyricUri");
       t.sampleRate = j.optInt("sampleRate");
       t.bitDepth = j.optInt("bitDepth");
       return t;
@@ -116,7 +119,7 @@ final class Library {
       paint.setColor(0x66fdf6df); canvas.drawCircle(460, 160, 95, paint);
       for (int i = 0; i < 5; i++) { paint.setColor(0x24305050); canvas.drawOval(-200, 240+i*50, 900, 820+i*50, paint); }
     }
-    paint.setColor(0xfffaf8f0); paint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", 0));
+    paint.setColor(0xfffaf8f0); paint.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL));
     paint.setTextSize(50); canvas.drawText(title, 48, 470, paint);
     paint.setTextSize(38); canvas.drawText(subtitle, 48, 520, paint);
     paint.setTextSize(16); canvas.drawText("COOL PLAYER  /  LISTEN & DISCOVER", 48, 588, paint);
@@ -298,7 +301,7 @@ final class Library {
           if (c != null && c.moveToFirst()) name = c.getString(0);
         }
         Uri l = texts.get(name.replaceFirst("\\.[^.]+$", "").toLowerCase(Locale.ROOT));
-        if (l != null) t.lyrics = read(l);
+        if (l != null) { t.lyrics = read(l); t.lyricUri = l.toString(); }
       } catch (Exception ignored) {
       }
     }

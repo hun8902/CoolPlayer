@@ -91,11 +91,11 @@ final class SheetDialog extends Dialog {
         row.setPadding(a.dp(16), a.dp(8), a.dp(12), a.dp(8));
         row.setMinimumHeight(a.dp(48));
         android.widget.ImageView glyph = new android.widget.ImageView(a);
-        glyph.setImageDrawable(new PlayerGlyph(menuIcon(spec.items[i]), a.accent, a.dp(21)));
+        glyph.setImageDrawable(new PlayerGlyph(menuIcon(spec.originalItems[i]), a.accent, a.dp(21)));
         glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(a.dp(22), a.dp(22));
         iconParams.rightMargin = a.dp(12);
-        row.addView(glyph, iconParams);
+        if (!spec.single) row.addView(glyph, iconParams);
         TextView text = a.text(spec.items[i], 15, a.ink);
         row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
         TextView mark = a.text(spec.selected == i ? "✓" : spec.navigation ? "›" : "", 16, spec.selected == i ? a.accent : a.muted);
@@ -117,7 +117,7 @@ final class SheetDialog extends Dialog {
           View divider = new View(a);
           divider.setBackgroundColor(a.darkTheme ? 0xff3a3a3c : 0xffe5e5ea);
           LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, 1);
-          line.leftMargin = a.dp(50);
+          line.leftMargin = a.dp(spec.single ? 16 : 50);
           group.addView(divider, line);
         }
       }
@@ -263,6 +263,10 @@ final class SheetDialog extends Dialog {
   }
 
   static String menuIcon(String label) {
+    if (label.contains("다음에 재생")) return "next";
+    if (label.contains("제거")) return "remove";
+    if (label.contains("재생목록") || label.contains("대기열")) return "queue";
+    if (label.contains("앨범아트")) return "album";
     if (label.contains("삭제") || label.contains("비우기")) return "trash";
     if (label.contains("검색")) return "search";
     if (label.contains("내보내기")) return "export";
@@ -284,7 +288,7 @@ final class SheetDialog extends Dialog {
     final MainActivity a;
     String title, message;
     View view;
-    String[] items;
+    String[] items, originalItems;
     boolean single, flexible, navigation;
     int selected = -1;
     DialogInterface.OnClickListener select;
@@ -316,6 +320,7 @@ final class SheetDialog extends Dialog {
     }
 
     Builder setItems(String[] s, DialogInterface.OnClickListener listener) {
+      originalItems = s.clone();
       items = s.clone();
       for (int i = 0; i < items.length; i++) items[i] = a.tr(items[i]);
       select = listener;
@@ -328,6 +333,7 @@ final class SheetDialog extends Dialog {
     }
 
     Builder setSingleChoiceItems(String[] s, int choice, DialogInterface.OnClickListener listener) {
+      originalItems = s.clone();
       items = s.clone();
       for (int i = 0; i < items.length; i++) items[i] = a.tr(items[i]);
       selected = choice;

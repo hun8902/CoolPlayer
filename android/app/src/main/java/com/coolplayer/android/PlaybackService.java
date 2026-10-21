@@ -9,9 +9,20 @@ import androidx.media3.session.*;
 import java.util.*;
 import org.json.*;
 
+@androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public class PlaybackService extends MediaSessionService {
   ExoPlayer player;
   MediaSession session;
+  final AppEqualizer equalizer = new AppEqualizer();
+  final android.content.SharedPreferences.OnSharedPreferenceChangeListener eqListener = (prefs, key) -> {
+    if ("eqPreset".equals(key) && player != null) applyEqualizer();
+  };
+  void applyEqualizer() {
+    boolean applied = equalizer.apply(this, player.getAudioSessionId());
+    getSharedPreferences("playback", 0).edit().putBoolean("eqApplied", applied).apply();
+    if (!applied && player.getAudioSessionId() > 0)
+      android.widget.Toast.makeText(this, AppLanguage.text(this, "현재 오디오 출력에서 이퀄라이저를 사용할 수 없습니다"), android.widget.Toast.LENGTH_LONG).show();
+  }
   final Handler handler = new Handler(Looper.getMainLooper());
   static final String SLEEP = "com.coolplayer.android.SLEEP";
   final Runnable sleep =
@@ -50,6 +61,7 @@ public class PlaybackService extends MediaSessionService {
             new Intent(this, MainActivity.class),
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     session = new MediaSession.Builder(this, player).setSessionActivity(open).build();
+    getSharedPreferences("settings", 0).registerOnSharedPreferenceChangeListener(eqListener);
     restoreQueue();
     player.addListener(
         new Player.Listener() {
@@ -61,6 +73,8 @@ public class PlaybackService extends MediaSessionService {
           @Override
           public void onAudioSessionIdChanged(int id) {
             getSharedPreferences("playback", 0).edit().putInt("audioSession", id).apply();
+            equalizer.release();
+            applyEqualizer();
           }
 
           @Override
@@ -185,6 +199,8 @@ public class PlaybackService extends MediaSessionService {
       player.pause();
       PlayerWidget.updateAll(this, player);
     }
+    getSharedPreferences("settings", 0).unregisterOnSharedPreferenceChangeListener(eqListener);
+    equalizer.release();
     if (session != null) session.release();
     if (player != null) player.release();
     super.onDestroy();

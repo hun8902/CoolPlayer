@@ -90,7 +90,7 @@ public class PlayerWidget extends AppWidgetProvider {
           new Intent(c, PlaybackService.class).setAction(c.getPackageName() + ".widget." + actions[i]);
       v.setOnClickPendingIntent(
           controls[i],
-          PendingIntent.getService(
+          PendingIntent.getForegroundService(
               c, i + 10, in, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
     }
     for (int id : ids) {

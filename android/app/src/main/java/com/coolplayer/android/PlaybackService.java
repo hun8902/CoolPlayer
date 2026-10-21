@@ -98,6 +98,15 @@ public class PlaybackService extends MediaSessionService {
     if (intent != null && intent.getAction() != null) {
       String action = intent.getAction();
       String prefix = getPackageName() + ".widget.";
+      if (action.startsWith(prefix)) {
+        android.app.NotificationManager manager = getSystemService(android.app.NotificationManager.class);
+        manager.createNotificationChannel(new android.app.NotificationChannel(
+            "widget_playback", "Cool Player", android.app.NotificationManager.IMPORTANCE_LOW));
+        startForeground(DefaultMediaNotificationProvider.DEFAULT_NOTIFICATION_ID, new android.app.Notification.Builder(this, "widget_playback")
+            .setSmallIcon(R.drawable.brand_mono).setContentTitle("Cool Player")
+            .setContentText(AppLanguage.text(this, "재생"))
+            .setContentIntent(session.getSessionActivity()).setOnlyAlertOnce(true).build());
+      }
       if (action.equals(prefix + "playlist")) {
         Library library = new Library(this);
         ArrayList<String> ids = library.playlists.get(intent.getStringExtra("playlist"));
@@ -121,6 +130,12 @@ public class PlaybackService extends MediaSessionService {
       if (action.startsWith(prefix)) {
         saveQueue();
         PlayerWidget.updateAll(this, player);
+        handler.postDelayed(() -> {
+          if (!player.getPlayWhenReady() || player.getMediaItemCount() == 0) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+          }
+        }, 1000);
       }
     }
     if (intent != null && SLEEP.equals(intent.getAction())) {

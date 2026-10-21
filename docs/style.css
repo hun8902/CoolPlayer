@@ -43,6 +43,12 @@
 /* Paint real full-width section boxes. Browser dark mode recolors these
    consistently; giant spread shadows were producing discolored side rails. */
 main{max-width:none;padding:0;overflow-x:clip}
-main>section,main>.hero-scroll,main>.product-facts{padding-left:max(5%,calc((100% - 1296px)/2));padding-right:max(5%,calc((100% - 1296px)/2));margin-left:0;margin-right:0;box-shadow:none;clip-path:none}
+main>section[class],main>.hero-scroll,main>.product-facts{padding-left:max(5%,calc((100% - 1296px)/2));padding-right:max(5%,calc((100% - 1296px)/2));margin-left:0;margin-right:0;box-shadow:none;clip-path:none}
 .hero-scroll .product-hero{padding-left:0;padding-right:0}
 @media(max-width:700px){.journey-heading{grid-template-columns:1fr}.journey-heading>p:last-child{justify-self:start}.music-comparison{border-radius:0}.navigation{padding-left:5%;padding-right:5%}}
+
+/* Grid children may shrink on narrow screens; section backgrounds stay full width. */
+.journey-story{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+.journey-heading{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
+main>footer{padding-left:5%;padding-right:5%}
+@media(max-width:700px){.journey-story{grid-template-columns:minmax(0,1fr)}}

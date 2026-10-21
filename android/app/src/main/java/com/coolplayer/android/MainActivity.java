@@ -2589,6 +2589,17 @@ public class MainActivity extends Activity {
       }
       int step = 0;
       String source = library.bundledLyrics(asset);
+      if (asset.equals("APACHE-2.0.txt")) {
+        TextView license = text(source.replaceAll("(?m)^[ \t]+", ""), 13, ink);
+        license.setGravity(Gravity.START);
+        license.setTextIsSelectable(true);
+        license.setLineSpacing(dp(3), 1.1f);
+        license.setPadding(dp(4), dp(8), dp(4), dp(8));
+        new SheetDialog.Builder(this).setTitle("오픈소스 라이선스 · Apache 2.0")
+            .setMessage("앱에 포함된 AndroidX·Media3·Guava 등 오픈소스 구성요소의 라이선스입니다. Cool Player 자체의 이용약관이 아닙니다.")
+            .setView(license).show();
+        return;
+      }
       for (String section : source.split("\\n\\s*\\n")) {
         LinearLayout cardView = column();
         cardView.setPadding(dp(16), dp(14), dp(16), dp(14));
@@ -2601,9 +2612,24 @@ public class MainActivity extends Activity {
           space(cardView, 8);
           section = section.substring(split + 1);
         }
-        TextView copy = text(section, 14, muted);
+        android.text.SpannableStringBuilder body = new android.text.SpannableStringBuilder();
+        for (String line : section.split("\\n")) {
+          if (body.length() > 0) body.append("\n");
+          String clean = line.trim();
+          if (clean.startsWith("https://") || clean.startsWith("http://")) {
+            String label = clean.contains("creativecommons.org") ? "라이선스 보기 ↗"
+                : clean.contains("commons.wikimedia.org") ? "음원 출처 보기 ↗"
+                : clean.contains("apache.org") ? "Apache 2.0 원문 ↗"
+                : android.net.Uri.parse(clean).getHost() + " ↗";
+            int start = body.length(); body.append(label);
+            body.setSpan(new android.text.style.URLSpan(clean), start, body.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+          } else body.append(line);
+        }
+        TextView copy = text(body.toString(), 14, muted);
+        copy.setText(body);
+        copy.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
         copy.setTextIsSelectable(true);
-        copy.setAutoLinkMask(android.text.util.Linkify.WEB_URLS);
+
         copy.setLineSpacing(dp(3), 1.1f);
         cardView.addView(copy);
         sections.addView(cardView, new LinearLayout.LayoutParams(-1, -2));
@@ -2758,8 +2784,13 @@ public class MainActivity extends Activity {
       settingRow(updateGroup, "download", "다운로드한 업데이트 설치", "", () -> updates.install());
     LinearLayout help = settingsGroup(stack, "사용법 및 정보");
     settingRow(help, "lyrics", "사용법", "", this::showUserGuide);
-    settingRow(help, "music", "저작권 및 오픈소스", "", () -> showInfoAsset("저작권 및 오픈소스", "COPYRIGHT.txt"));
-    settingRow(help, "lyrics", "오픈소스 라이선스 전문", "", () -> showInfoAsset("Apache License 2.0", "APACHE-2.0.txt"));
+    settingRow(help, "info", "Cool Player 안내 및 저작권", "", () -> showInfoAsset("Cool Player 안내 및 저작권", "COPYRIGHT.txt"));
+    settingRow(help, "music", "체험곡 출처", "", () -> showInfoAsset("체험곡 출처", "DEMO_CREDITS.txt"));
+    settingRow(help, "info", "오픈소스 고지", "", () ->
+        new SheetDialog.Builder(this).setTitle("오픈소스 고지")
+            .setNavigationItems(new String[]{"사용한 라이브러리", "라이선스 전문"}, (dialog, index) ->
+                showInfoAsset(index == 0 ? "사용한 라이브러리" : "라이선스 전문",
+                    index == 0 ? "OPEN_SOURCE.txt" : "APACHE-2.0.txt")).show());
     LinearLayout about = settingsGroup(stack, "Cool Player");
     settingRow(
         about,

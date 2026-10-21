@@ -90,6 +90,12 @@ final class SheetDialog extends Dialog {
         LinearLayout row = a.row();
         row.setPadding(a.dp(16), a.dp(8), a.dp(12), a.dp(8));
         row.setMinimumHeight(a.dp(48));
+        android.widget.ImageView glyph = new android.widget.ImageView(a);
+        glyph.setImageDrawable(new PlayerGlyph(menuIcon(spec.items[i]), a.accent, a.dp(21)));
+        glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(a.dp(22), a.dp(22));
+        iconParams.rightMargin = a.dp(12);
+        row.addView(glyph, iconParams);
         TextView text = a.text(spec.items[i], 15, a.ink);
         row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
         TextView mark = a.text(spec.selected == i ? "✓" : spec.navigation ? "›" : "", 16, spec.selected == i ? a.accent : a.muted);
@@ -111,7 +117,7 @@ final class SheetDialog extends Dialog {
           View divider = new View(a);
           divider.setBackgroundColor(a.darkTheme ? 0xff3a3a3c : 0xffe5e5ea);
           LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(-1, 1);
-          line.leftMargin = a.dp(16);
+          line.leftMargin = a.dp(50);
           group.addView(divider, line);
         }
       }
@@ -254,6 +260,24 @@ final class SheetDialog extends Dialog {
       which = w;
       listener = c;
     }
+  }
+
+  static String menuIcon(String label) {
+    if (label.contains("삭제") || label.contains("비우기")) return "trash";
+    if (label.contains("검색")) return "search";
+    if (label.contains("내보내기")) return "export";
+    if (label.contains("편집") || label.contains("이름")) return "edit";
+    if (label.contains("타이밍") || label.contains("타이머")) return "clock";
+    if (label.contains("글자")) return "font";
+    if (label.contains("파일") || label.contains("폴더")) return "folder";
+    if (label.contains("가져") || label.contains("업데이트")) return "download";
+    if (label.contains("즐겨")) return "heart";
+    if (label.contains("앨범")) return "album";
+    if (label.contains("가사")) return "lyrics";
+    if (label.contains("설정") || label.contains("테마")) return "settings";
+    if (label.contains("라이선스") || label.contains("저작권") || label.contains("정보")) return "info";
+    if (label.contains("재생") || label.contains("플레이어") || label.contains("체험")) return "music";
+    return "list";
   }
 
   static class Builder {

@@ -32,6 +32,39 @@ final class PlayerGlyph extends Drawable {
     canvas.scale(getBounds().width() / 24f, getBounds().height() / 24f);
     paint.setStyle(Paint.Style.STROKE);
     switch (name) {
+      case "folder":
+        line(canvas, 3, 7, 3, 20, 21, 20, 21, 7, 12, 7, 9, 4, 3, 4, 3, 7);
+        break;
+      case "edit":
+        line(canvas, 5, 16, 16, 5, 20, 9, 9, 20, 4, 21, 5, 16, 9, 20);
+        break;
+      case "export":
+        line(canvas, 12, 15, 12, 3, 7, 8);
+        line(canvas, 12, 3, 17, 8);
+        line(canvas, 5, 12, 5, 21, 19, 21, 19, 12);
+        break;
+      case "clock":
+        canvas.drawCircle(12, 12, 9, paint);
+        line(canvas, 12, 6, 12, 12, 16, 14);
+        break;
+      case "font":
+        line(canvas, 3, 19, 9, 5, 15, 19);
+        line(canvas, 5, 14, 13, 14);
+        line(canvas, 16, 10, 23, 10);
+        line(canvas, 19.5f, 10, 19.5f, 19);
+        break;
+      case "trash":
+        line(canvas, 4, 6, 20, 6);
+        line(canvas, 9, 6, 9, 3, 15, 3, 15, 6);
+        line(canvas, 6, 6, 7, 21, 17, 21, 18, 6);
+        line(canvas, 10, 10, 10, 17);
+        line(canvas, 14, 10, 14, 17);
+        break;
+      case "info":
+        canvas.drawCircle(12, 12, 9, paint);
+        line(canvas, 12, 11, 12, 17);
+        canvas.drawPoint(12, 7, paint);
+        break;
       case "close":
         line(canvas, 7, 7, 17, 17);
         line(canvas, 17, 7, 7, 17);

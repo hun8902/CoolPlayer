@@ -1,0 +1,8 @@
+오픈소스 구성요소
+다음 라이선스는 앱에 포함된 외부 라이브러리에 적용됩니다. Cool Player 자체의 이용약관이 아닙니다.
+AndroidX Core, Window, Annotation, Media3 및 Google Guava: Apache License 2.0. 각 프로젝트의 저작권과 라이선스 조건이 적용됩니다.
+https://www.apache.org/licenses/LICENSE-2.0
+https://github.com/androidx/media
+https://github.com/androidx/androidx
+https://github.com/google/guava
+

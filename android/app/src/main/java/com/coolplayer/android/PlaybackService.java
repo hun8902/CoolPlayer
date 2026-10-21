@@ -188,7 +188,16 @@ public class PlaybackService extends MediaSessionService {
 
   @Override
   public void onTaskRemoved(Intent rootIntent) {
-    if (!player.getPlayWhenReady()) stopSelf();
+    // Removing the app from Recents explicitly ends playback.
+    handler.removeCallbacks(sleep);
+    getSharedPreferences("settings", 0).edit().remove("sleepEnd").apply();
+    if (player != null) {
+      player.pause();
+      saveQueue();
+      PlayerWidget.updateAll(this, player);
+    }
+    stopForeground(STOP_FOREGROUND_REMOVE);
+    stopSelf();
   }
 
   @Override

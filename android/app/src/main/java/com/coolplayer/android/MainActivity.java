@@ -110,20 +110,21 @@ public class MainActivity extends Activity {
         }
       };
 
-  AppUpdates updates;
+  String appVersion() {
+    try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+    catch (Exception e) { return "?"; }
+  }
 
   @Override
   protected void onResume() {
     super.onResume();
     PlaylistWidget.updateAll(this);
-    if (updates != null) updates.resume();
   }
 
   @Override
   public void onCreate(Bundle b) {
     super.onCreate(b);
     library = new Library(this);
-    updates = new AppUpdates(this);
     if (b != null) {
       now = b.getBoolean("now");
       tab = b.getString("tab", "곡");
@@ -131,11 +132,6 @@ public class MainActivity extends Activity {
     showPhoneLyrics = b != null && b.getBoolean("lyrics");
     colors();
     render();
-    handler.postDelayed(
-        () -> {
-          if (!destroyed) updates.automaticCheck();
-        },
-        2500);
     foldTracker =
         new androidx.window.java.layout.WindowInfoTrackerCallbackAdapter(
             androidx.window.layout.WindowInfoTracker.getOrCreate(this));
@@ -225,7 +221,6 @@ public class MainActivity extends Activity {
 
   @Override
   protected void onDestroy() {
-    updates.close();
     if (screenTransition != null) screenTransition.cancel();
     if (backdrop != null) backdrop.stop();
     destroyed = true;
@@ -2886,13 +2881,6 @@ public class MainActivity extends Activity {
                 else toast("홈 화면을 길게 눌러 Cool Player 위젯을 선택하세요");
               }).show();
         });
-    LinearLayout updateGroup = settingsGroup(stack, "앱 업데이트");
-    settingRow(
-        updateGroup, "repeat", "업데이트 확인", "현재 " + updates.version(), () -> updates.check(true));
-    settingSwitch(updateGroup, "새 버전 자동 확인", updates.automatic(),
-        value -> { if (updates.automatic() != value) updates.toggleAutomatic(); });
-    if (new java.io.File(getCacheDir(), "updates/Cool-Player-Android.apk").exists())
-      settingRow(updateGroup, "download", "다운로드한 업데이트 설치", "", () -> updates.install());
     LinearLayout help = settingsGroup(stack, "사용법 및 정보");
     settingRow(help, "lyrics", "사용법", "", this::showUserGuide);
     settingRow(help, "info", "Cool Player 안내 및 저작권", "", () -> showInfoAsset("Cool Player 안내 및 저작권", "COPYRIGHT.txt"));
@@ -2907,10 +2895,10 @@ public class MainActivity extends Activity {
         about,
         "music",
         "앱 정보",
-        updates.version(),
+        appVersion(),
         () ->
             new SheetDialog.Builder(this)
-                .setTitle("Cool Player " + updates.version())
+                .setTitle("Cool Player " + appVersion())
                 .setMessage(
                     "기기에 담긴 음악과 가사를 함께 즐기는 플레이어.\n\n사용 방법과 지원 기능은 설정의 사용법에서 확인할 수 있습니다.")
                 .setPositiveButton("확인", null)

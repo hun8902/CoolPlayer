@@ -621,7 +621,7 @@ public class MainActivity extends Activity {
     }
     LinearLayout header = row();
     ImageView brand = new ImageView(this);
-    brand.setImageResource(R.drawable.brand);
+    brand.setImageResource(R.drawable.brand_mono);
     header.addView(brand, new LinearLayout.LayoutParams(dp(36), dp(36)));
     TextView name = text("Cool Player", 19, ink);
     name.setTypeface(null, Typeface.BOLD);

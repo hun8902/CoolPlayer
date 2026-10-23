@@ -1197,6 +1197,8 @@ public class MainActivity extends Activity {
   void prompt(String title, String initial, TextAction action) {
     EditText input = new EditText(this);
     input.setText(initial);
+    input.setHint(tr(title));
+    input.setMinHeight(dp(52));
     input.setSingleLine();
     new SheetDialog.Builder(this)
         .setTitle(title)
@@ -2073,6 +2075,7 @@ public class MainActivity extends Activity {
                       : Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (Exception ignored) {
         }
+      final String targetPlaylist = playlistFilter;
       importing = true;
       toast("음악 정보를 가져오고 있습니다");
       io.execute(
@@ -2094,10 +2097,12 @@ public class MainActivity extends Activity {
                   if (!destroyed) {
                     int added = 0;
                     for (Library.Track incoming : imported.tracks) {
+                      String importedId = incoming.id;
                       boolean exists = false;
                       for (Library.Track saved : library.tracks)
                         if (saved.uri.equals(incoming.uri)) {
                           exists = true;
+                          importedId = saved.id;
                           if (saved.lyrics.isEmpty()) saved.lyrics = incoming.lyrics;
                           if (!incoming.lyricUri.isEmpty()) saved.lyricUri = incoming.lyricUri;
                           if (!incoming.id.equals(saved.id) && !incoming.art.isEmpty())
@@ -2107,6 +2112,10 @@ public class MainActivity extends Activity {
                       if (!exists) {
                         library.tracks.add(incoming);
                         added++;
+                      }
+                      if (!targetPlaylist.isEmpty() && library.playlists.containsKey(targetPlaylist)) {
+                        ArrayList<String> ids = library.playlists.get(targetPlaylist);
+                        if (!ids.contains(importedId)) ids.add(importedId);
                       }
                     }
                     library.save();

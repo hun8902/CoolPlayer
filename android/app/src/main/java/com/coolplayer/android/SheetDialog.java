@@ -192,7 +192,10 @@ final class SheetDialog extends Dialog {
       e.setHintTextColor(a.muted);
       e.setTextSize(15);
       e.setPadding(a.dp(14), a.dp(12), a.dp(14), a.dp(12));
-      e.setBackground(a.shape(a.card, 12));
+      android.graphics.drawable.GradientDrawable field = a.shape(a.card, 12);
+      field.setStroke(a.dp(1), a.muted);
+      e.setBackground(field);
+      e.setMinHeight(a.dp(52));
     } else if (v instanceof ViewGroup) {
       ViewGroup group = (ViewGroup) v;
       for (int i = 0; i < group.getChildCount(); i++) style(group.getChildAt(i));

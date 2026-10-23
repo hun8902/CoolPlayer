@@ -15,6 +15,18 @@ final class SheetDialog extends Dialog {
   final MainActivity a;
   final Builder spec;
   boolean dismissing;
+  static final Set<SheetDialog> open = Collections.newSetFromMap(new WeakHashMap<SheetDialog, Boolean>());
+  static void resizeOpen(MainActivity activity) {
+    for (SheetDialog dialog : new ArrayList<>(open)) if (dialog.a == activity && dialog.isShowing()) {
+      Window w = dialog.getWindow();
+      if (w != null) {
+        w.setLayout(activity.expanded() ? activity.dp(520) : WindowManager.LayoutParams.MATCH_PARENT,
+            dialog.spec.flexible ? (int)(activity.getResources().getDisplayMetrics().heightPixels * .86) : WindowManager.LayoutParams.WRAP_CONTENT);
+        w.setGravity(activity.expanded() ? Gravity.CENTER : Gravity.BOTTOM);
+        w.getDecorView().requestLayout();
+      }
+    }
+  }
 
   SheetDialog(Builder b) {
     super(b.a);
@@ -96,7 +108,14 @@ final class SheetDialog extends Dialog {
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(a.dp(22), a.dp(22));
         iconParams.rightMargin = a.dp(12);
         if (!spec.single) row.addView(glyph, iconParams);
+        if (spec.single) row.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
         TextView text = a.text(spec.items[i], 15, a.ink);
+        text.setIncludeFontPadding(true);
+        if (spec.single) {
+          text.setGravity(Gravity.LEFT | Gravity.CENTER_VERTICAL);
+          text.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
+          text.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY);
+        }
         row.addView(text, new LinearLayout.LayoutParams(0, -2, 1));
         TextView mark = a.text(spec.selected == i ? "✓" : spec.navigation ? "›" : "", 16, spec.selected == i ? a.accent : a.muted);
         row.addView(mark);
@@ -171,9 +190,10 @@ final class SheetDialog extends Dialog {
         window.setAttributes(attributes);
       }
       window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-      window.setNavigationBarColor(a.bg);
+      if (android.os.Build.VERSION.SDK_INT < 35) window.setNavigationBarColor(a.bg);
       window.setGravity(a.expanded() ? Gravity.CENTER : Gravity.BOTTOM);
     }
+    setCancelable(true);
     setCanceledOnTouchOutside(true);
   }
 
@@ -208,6 +228,7 @@ final class SheetDialog extends Dialog {
   public void show() {
     dismissing = false;
     super.show();
+    open.add(this);
     Window w = getWindow();
     if (w != null) {
       w.setLayout(
@@ -236,23 +257,11 @@ final class SheetDialog extends Dialog {
 
   @Override
   public void dismiss() {
-    if (dismissing) return;
     Window window = getWindow();
-    if (!isShowing() || window == null || a.isFinishing()
-        || a.isDestroyed() || !android.animation.ValueAnimator.areAnimatorsEnabled()) {
-      super.dismiss();
-      return;
-    }
-    dismissing = true;
-    View decor = window.getDecorView();
-    decor.animate().cancel();
-    decor.animate()
-        .translationY(decor.getTranslationY() + a.dp(a.expanded() ? 24 : 56))
-        .scaleX(.98f).scaleY(.98f).alpha(0)
-        .setDuration(180)
-        .setInterpolator(new android.view.animation.PathInterpolator(.4f, 0, 1, 1))
-        .withEndAction(() -> SheetDialog.super.dismiss())
-        .start();
+    if (window != null) window.getDecorView().animate().cancel();
+    dismissing = false;
+    open.remove(this);
+    super.dismiss();
   }
 
   static class Action {

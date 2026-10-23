@@ -9,8 +9,8 @@ android {
         applicationId 'com.coolplayer.android'
         minSdk 27
         targetSdk 36
-        versionCode 26
-        versionName '1.4.21'
+        versionCode 28
+        versionName '1.4.3'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     signingConfigs {

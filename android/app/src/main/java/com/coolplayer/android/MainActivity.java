@@ -221,6 +221,7 @@ public class MainActivity extends Activity {
     super.onConfigurationChanged(c);
     colors();
     render();
+    SheetDialog.resizeOpen(this);
   }
 
   @Override
@@ -271,9 +272,20 @@ public class MainActivity extends Activity {
     muted = Color.parseColor(dark ? "#A3ADBD" : "#758094");
     accent = Color.parseColor(dark ? "#BDCAE9" : "#526FA7");
     setTheme(dark ? R.style.DarkTheme : R.style.AppTheme);
-    getWindow().setStatusBarColor(bg);
-    getWindow().setNavigationBarColor(bg);
-    getWindow()
+    if (Build.VERSION.SDK_INT < 35) {
+      getWindow().setStatusBarColor(bg);
+      getWindow().setNavigationBarColor(bg);
+    }
+    if (Build.VERSION.SDK_INT >= 30) {
+      // Ensure PhoneWindow has created its DecorView before requesting its controller.
+      getWindow().getDecorView();
+      android.view.WindowInsetsController controller = getWindow().getInsetsController();
+      if (controller != null) {
+        int appearance = android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+            | android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+        controller.setSystemBarsAppearance(dark ? 0 : appearance, appearance);
+      }
+    } else getWindow()
         .getDecorView()
         .setSystemUiVisibility(
             (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
@@ -964,8 +976,9 @@ public class MainActivity extends Activity {
       entry.setOnClickListener(v -> { playlistFilter = name; render(); });
       Runnable menu = () -> new SheetDialog.Builder(this)
           .setTitle(name)
-          .setItems(new String[]{"재생목록 열기", "삭제"}, (dialog, which) -> {
+          .setItems(new String[]{"재생목록 열기", "재생목록만 삭제", "음악 파일도 함께 삭제"}, (dialog, which) -> {
             if (which == 0) { playlistFilter = name; render(); return; }
+            if (which == 2) { deletePlaylistFiles(name); return; }
             new SheetDialog.Builder(this).setTitle(name)
                 .setMessage("이 재생목록을 삭제할까요? 음원 파일은 보존됩니다.")
                 .setPositiveButton("삭제", (d, w) -> {
@@ -1099,6 +1112,39 @@ public class MainActivity extends Activity {
               for (ArrayList<String> ids : library.playlists.values()) ids.removeAll(removed);
               library.save(); render();
               toast(partial ? "음악은 삭제했지만 연결된 가사 파일은 삭제하지 못했습니다." : "음악 파일과 저장된 가사를 삭제했습니다");
+            });
+          });
+        }).show();
+  }
+
+  void deletePlaylistFiles(String name) {
+    ArrayList<String> selected = new ArrayList<>(library.playlists.getOrDefault(name, new ArrayList<>()));
+    new SheetDialog.Builder(this).setTitle("음악 파일도 함께 삭제")
+        .setMessage(name + "\n\n재생목록의 음악 파일과 연결된 가사 파일을 기기에서 삭제합니다. 다른 재생목록에서도 제거되며 앱에서 복구할 수 없습니다. 계속할까요?")
+        .setNegativeButton("취소", null)
+        .setPositiveButton("파일까지 삭제", (d, w) -> {
+          ArrayList<Library.Track> targets = new ArrayList<>();
+          for (String id : selected) { Library.Track t = library.find(id); if (t != null) targets.add(t); }
+          if (player != null) for (int i = player.getMediaItemCount() - 1; i >= 0; i--)
+            if (selected.contains(player.getMediaItemAt(i).mediaId)) player.removeMediaItem(i);
+          io.execute(() -> {
+            HashSet<String> deleted = new HashSet<>(); int failed = 0;
+            for (Library.Track t : targets) {
+              try { if (!deleted.contains(t.uri)) { deleteDocument(t.uri); deleted.add(t.uri); } }
+              catch (Exception e) { failed++; continue; }
+              try { if (!t.lyricUri.isEmpty() && !t.lyricUri.equals(t.uri)) deleteDocument(t.lyricUri); }
+              catch (Exception e) { failed++; }
+            }
+            final int failures = failed;
+            runOnUiThread(() -> {
+              HashSet<String> ids = new HashSet<>();
+              for (Library.Track t : library.tracks) if (deleted.contains(t.uri)) ids.add(t.id);
+              library.tracks.removeIf(t -> ids.contains(t.id));
+              for (ArrayList<String> list : library.playlists.values()) list.removeAll(ids);
+              if (failures == 0) library.playlists.remove(name);
+              if (name.equals(playlistFilter) && !library.playlists.containsKey(name)) playlistFilter = "";
+              library.save(); render();
+              toast(failures == 0 ? "재생목록과 음악 파일을 삭제했습니다" : "일부 파일을 삭제하지 못했습니다. 재생목록을 유지합니다.");
             });
           });
         }).show();
@@ -2226,7 +2272,7 @@ public class MainActivity extends Activity {
           progress.dismiss();
           new SheetDialog.Builder(this).setTitle("가사를 가져오지 못했습니다")
               .setMessage(e.getMessage() == null ? "연결을 확인하고 다시 시도해 주세요." : e.getMessage())
-              .setPositiveButton("다시 시도", (d, w) -> autoLyrics(t))
+              .setPositiveButton("수동 검색", (d, w) -> searchLyrics(t))
               .setNegativeButton("닫기", null).show();
         });
       }
@@ -2770,8 +2816,10 @@ public class MainActivity extends Activity {
         }
         TextView copy = text(body.toString(), 14, muted);
         copy.setText(body);
+        copy.setTextIsSelectable(false);
+        copy.setLinksClickable(true);
+        copy.setLinkTextColor(accent);
         copy.setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
-        copy.setTextIsSelectable(true);
 
         copy.setLineSpacing(dp(3), 1.1f);
         cardView.addView(copy);

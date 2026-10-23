@@ -513,7 +513,7 @@
   ],
   "나중에": [
     "Later",
-    "あとで"
+    "Later"
   ],
   "설치": [
     "Install",
@@ -1314,5 +1314,49 @@
   "전체 화면 가사": [
     "Full-screen lyrics",
     "全画面歌詞"
+  ],
+  "없는 가사 한 번에 가져오기": [
+    "Import missing lyrics",
+    "Import missing lyrics"
+  ],
+  "모든 곡에 가사가 저장되어 있습니다.": [
+    "All songs already have lyrics.",
+    "All songs already have lyrics."
+  ],
+  "가사를 한 번에 가져올까요?": [
+    "Import lyrics for these songs?",
+    "Import lyrics for these songs?"
+  ],
+  "가사가 없는 %d곡을 검색해 저장합니다. 일부 곡은 수동 검색이 필요할 수 있습니다. 기존 가사는 유지됩니다.": [
+    "Find and save lyrics for %d songs without lyrics. Some songs may require manual search. Existing lyrics will be kept.",
+    "Find and save lyrics for %d songs without lyrics. Some songs may require manual search. Existing lyrics will be kept."
+  ],
+  "가사를 가져오는 중입니다.": [
+    "Lyrics import is already in progress.",
+    "Lyrics import is already in progress."
+  ],
+  "가사 일괄 가져오기": [
+    "Import lyrics",
+    "Import lyrics"
+  ],
+  "%d / %d곡 · %s": [
+    "%d / %d songs · %s",
+    "%d / %d songs · %s"
+  ],
+  "처리 %d곡 · 저장 %d곡 · 찾지 못함 %d곡": [
+    "Processed %d · Saved %d · Not found %d",
+    "Processed %d · Saved %d · Not found %d"
+  ],
+  "중단되었습니다. 이미 저장한 가사는 유지됩니다.": [
+    "Stopped. Lyrics already saved have been kept.",
+    "Stopped. Lyrics already saved have been kept."
+  ],
+  "다음 곡은 수동 검색을 이용해 주세요.": [
+    "Search manually for these songs.",
+    "Search manually for these songs."
+  ],
+  "가사 가져오기 결과": [
+    "Lyrics import results",
+    "Lyrics import results"
   ]
 }

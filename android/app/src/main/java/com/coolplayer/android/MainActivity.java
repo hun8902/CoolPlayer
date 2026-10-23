@@ -1008,9 +1008,16 @@ public class MainActivity extends Activity {
       entry.setOnClickListener(v -> { playlistFilter = name; render(); });
       Runnable menu = () -> new SheetDialog.Builder(this)
           .setTitle(name)
-          .setItems(new String[]{"재생목록 열기", "재생목록만 삭제", "음악 파일도 함께 삭제"}, (dialog, which) -> {
+          .setItems(new String[]{"재생목록 열기", "재생목록만 삭제", "음악 파일도 함께 삭제", "없는 가사 한 번에 가져오기"}, (dialog, which) -> {
             if (which == 0) { playlistFilter = name; render(); return; }
             if (which == 2) { deletePlaylistFiles(name); return; }
+            if (which == 3) {
+              ArrayList<Library.Track> songs = new ArrayList<>();
+              for (String id : library.playlists.getOrDefault(name, new ArrayList<>())) {
+                Library.Track song = library.find(id); if (song != null) songs.add(song);
+              }
+              offerBatchLyrics(songs); return;
+            }
             new SheetDialog.Builder(this).setTitle(name)
                 .setMessage("이 재생목록을 삭제할까요? 음원 파일은 보존됩니다.")
                 .setPositiveButton("삭제", (d, w) -> {
@@ -2224,6 +2231,7 @@ public class MainActivity extends Activity {
                   importing = false;
                   if (!destroyed) {
                     int added = 0;
+                    ArrayList<Library.Track> importedSongs = new ArrayList<>();
                     for (Library.Track incoming : imported.tracks) {
                       String importedId = incoming.id;
                       boolean exists = false;
@@ -2241,6 +2249,8 @@ public class MainActivity extends Activity {
                         library.tracks.add(incoming);
                         added++;
                       }
+                      Library.Track importedSong = library.find(importedId);
+                      if (importedSong != null) importedSongs.add(importedSong);
                       if (!targetPlaylist.isEmpty() && library.playlists.containsKey(targetPlaylist)) {
                         ArrayList<String> ids = library.playlists.get(targetPlaylist);
                         if (!ids.contains(importedId)) ids.add(importedId);
@@ -2252,6 +2262,7 @@ public class MainActivity extends Activity {
                     }
                     render();
                     toast(added + "곡 추가" + (errors > 0 ? " · " + errors + "개 파일을 읽지 못했습니다" : ""));
+                    offerBatchLyrics(importedSongs);
                   }
                 });
           });
@@ -2287,6 +2298,68 @@ public class MainActivity extends Activity {
             }
           });
     }
+  }
+
+  boolean batchLyricsRunning;
+  void offerBatchLyrics(java.util.List<Library.Track> songs) {
+    LinkedHashMap<String, Library.Track> unique = new LinkedHashMap<>();
+    for (Library.Track song : songs) if (song.lyrics.trim().isEmpty()) unique.put(song.id, song);
+    if (unique.isEmpty()) { toast("모든 곡에 가사가 저장되어 있습니다."); return; }
+    ArrayList<Library.Track> pending = new ArrayList<>(unique.values());
+    new SheetDialog.Builder(this).setTitle("가사를 한 번에 가져올까요?")
+        .setMessage(String.format(tr("가사가 없는 %d곡을 검색해 저장합니다. 일부 곡은 수동 검색이 필요할 수 있습니다. 기존 가사는 유지됩니다."), pending.size()))
+        .setNegativeButton("나중에", null)
+        .setPositiveButton("가사 가져오기", (d, w) -> startBatchLyrics(pending)).show();
+  }
+
+  void startBatchLyrics(ArrayList<Library.Track> songs) {
+    if (batchLyricsRunning) { toast("가사를 가져오는 중입니다."); return; }
+    batchLyricsRunning = true;
+    java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
+    TextView status = text("", 15, ink);
+    SheetDialog progress = new SheetDialog.Builder(this).setTitle("가사 일괄 가져오기")
+        .setView(status).setNegativeButton("취소", (d, w) -> cancelled.set(true)).create();
+    progress.setOnDismissListener(d -> cancelled.set(true));
+    progress.show();
+    io.execute(() -> {
+      int processed = 0, success = 0;
+      ArrayList<String> failed = new ArrayList<>();
+      for (Library.Track song : songs) {
+        if (cancelled.get() || destroyed) break;
+        final int position = processed + 1;
+        runOnUiThread(() -> status.setText(String.format(tr("%d / %d곡 · %s"), position, songs.size(), song.title)));
+        String raw = null;
+        try { raw = Lyrics.automatic(song); } catch (Exception ignored) {}
+        if (cancelled.get() || destroyed) break;
+        final String found = raw;
+        java.util.concurrent.CountDownLatch saved = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicBoolean stored = new java.util.concurrent.atomic.AtomicBoolean();
+        runOnUiThread(() -> {
+          try {
+            Library.Track currentSong = library.find(song.id);
+            if (!cancelled.get() && currentSong != null && currentSong.lyrics.trim().isEmpty()
+                && found != null && !found.trim().isEmpty()) {
+              currentSong.lyrics = found; library.save(); stored.set(true);
+            }
+          } finally { saved.countDown(); }
+        });
+        try { saved.await(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+        processed++;
+        if (stored.get()) success++; else failed.add(song.title);
+        try { Thread.sleep(1100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+      }
+      final int done = processed, imported = success;
+      runOnUiThread(() -> {
+        batchLyricsRunning = false;
+        progress.dismiss();
+        if (destroyed) return;
+        render();
+        String summary = String.format(tr("처리 %d곡 · 저장 %d곡 · 찾지 못함 %d곡"), done, imported, failed.size());
+        if (done < songs.size()) summary += "\n" + tr("중단되었습니다. 이미 저장한 가사는 유지됩니다.");
+        if (!failed.isEmpty()) summary += "\n\n" + tr("다음 곡은 수동 검색을 이용해 주세요.") + "\n" + String.join("\n", failed);
+        new SheetDialog.Builder(this).setTitle("가사 가져오기 결과").setMessage(summary).show();
+      });
+    });
   }
 
   void applyLyrics(Library.Track t, String raw) {

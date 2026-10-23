@@ -205,20 +205,60 @@ final class Lyrics {
         .replaceAll("[^\\p{L}\\p{N}]", "");
   }
 
-  static String automatic(Library.Track t) throws Exception {
-    Page p = search(t.title, t.artist.equals("알 수 없는 아티스트") ? "" : t.artist, 0);
+  static String originalTitle(Library.Track t) {
+    if (t.duration <= 0 || t.artist.equals("알 수 없는 아티스트") || t.artist.trim().isEmpty()) return "";
+    try {
+      String title = t.title.replace("\\", " ").replace("\"", " ").trim();
+      String artist = international(t.artist).replace("\\", " ").replace("\"", " ").trim();
+      String query = "artist:\"" + artist + "\" AND (recording:\"" + title
+          + "\" OR alias:\"" + title + "\") AND dur:[" + Math.max(0, t.duration - 3000)
+          + " TO " + (t.duration + 3000) + "]";
+      JSONArray recordings = new JSONObject(request("https://musicbrainz.org/ws/2/recording/?fmt=json&limit=10&query=" + enc(query))).optJSONArray("recordings");
+      if (recordings == null) return "";
+      LinkedHashSet<String> candidates = new LinkedHashSet<>();
+      for (int i = 0; i < recordings.length(); i++) {
+        JSONObject item = recordings.getJSONObject(i);
+        if (item.optInt("score", 0) < 95 || Math.abs(item.optLong("length", -1) - t.duration) > 3000) continue;
+        JSONArray credits = item.optJSONArray("artist-credit");
+        boolean artistMatches = false;
+        if (credits != null) for (int j = 0; j < credits.length(); j++) {
+          JSONObject credit = credits.optJSONObject(j);
+          if (credit == null) continue;
+          JSONObject person = credit.optJSONObject("artist");
+          if (norm(credit.optString("name")).equals(norm(t.artist))
+              || (person != null && norm(person.optString("name")).equals(norm(t.artist)))) artistMatches = true;
+        }
+        String candidate = item.optString("title", "").trim();
+        if (artistMatches && !candidate.isEmpty()) candidates.add(candidate);
+      }
+      return candidates.size() == 1 ? candidates.iterator().next() : "";
+    } catch (Exception ignored) { return ""; }
+  }
+
+  static String matchingLyrics(String title, Library.Track t) throws Exception {
+    Page p = search(title, t.artist.equals("알 수 없는 아티스트") ? "" : t.artist, 0);
     String plain = null;
     for (Result r : p.results) {
-      if (!norm(r.title).equals(norm(t.title))) continue;
+      if (!norm(r.title).equals(norm(title))) continue;
       if (!t.artist.equals("알 수 없는 아티스트") && !norm(r.artist).equals(norm(t.artist))) continue;
       try {
         String raw = resolve(r);
+        if (raw.trim().isEmpty()) continue;
         if (!parse(raw).isEmpty()) return raw;
         if (plain == null) plain = raw;
-      } catch (Exception ignored) {
-      }
+      } catch (Exception ignored) {}
     }
-    if (plain != null) return plain;
+    return plain;
+  }
+
+  static String automatic(Library.Track t) throws Exception {
+    String raw = matchingLyrics(t.lyricSearchTitle.isEmpty() ? t.title : t.lyricSearchTitle, t);
+    if (raw != null) return raw;
+    String original = originalTitle(t);
+    if (!original.isEmpty() && !norm(original).equals(norm(t.title))) {
+      raw = matchingLyrics(original, t);
+      if (raw != null) { t.lyricSearchTitle = original; return raw; }
+    }
     throw new IOException("일치하는 가사를 찾지 못했습니다. 곡명과 가수를 직접 검색해 주세요.");
   }
 }

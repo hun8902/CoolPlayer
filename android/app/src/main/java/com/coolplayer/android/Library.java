@@ -16,6 +16,7 @@ final class Library {
   static class Track {
     String id, uri, title, artist, album, art = "", format = "", lyrics = "";
     String lyricUri = "";
+    String lyricSearchTitle = "";
     long duration;
     int sampleRate, bitDepth;
     boolean favorite;
@@ -33,6 +34,7 @@ final class Library {
       j.put("favorite", favorite);
       j.put("lyrics", lyrics);
       j.put("lyricUri", lyricUri);
+      j.put("lyricSearchTitle", lyricSearchTitle);
       j.put("sampleRate", sampleRate);
       j.put("bitDepth", bitDepth);
       return j;
@@ -43,6 +45,7 @@ final class Library {
       t.id = j.optString("id");
       t.uri = j.optString("uri");
       t.title = j.optString("title");
+      t.lyricSearchTitle = j.optString("lyricSearchTitle", "");
       t.artist = j.optString("artist");
       t.album = j.optString("album");
       t.art = j.optString("art");

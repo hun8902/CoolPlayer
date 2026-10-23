@@ -2,8 +2,6 @@ Amazing Grace
 아티스트: Rocks From The Garden
 보컬: Joannie · 기타: Randy
 녹음 공개일: 2006년 6월 3일
-
-공개 조건
 Wikimedia Commons에서 PD-author로 공개된 녹음입니다. 원문 곡과 가사는 퍼블릭 도메인입니다.
 첫 절 37초를 발췌하고 페이드 처리 및 MP3 변환을 했습니다.
 https://commons.wikimedia.org/wiki/File:Amazing_Grace_with_vocals_and_guitar_by_Rocks_From_The_Garden_-_20060603.ogg
@@ -12,14 +10,9 @@ Morning Blue
 아티스트·작곡·작사: Josh Woodward
 앨범: The Simple Life, Part 1 (2008)
 라이선스: CC BY 3.0 US
-
-앱에 사용한 형태
 원본 OGG 녹음을 MP3로 변환했습니다.
 동기화 시간 정보: Cool Player
 제작자가 앱을 보증한다는 의미는 아닙니다.
 https://www.joshwoodward.com/
 https://commons.wikimedia.org/wiki/File:Josh_Woodward_-_The_Simple_Life,_Part_1_-_08_-_Morning_Blue.ogg
 https://creativecommons.org/licenses/by/3.0/us/
-
-두 체험곡의 커버는 Cool Player가 작성한 기하학 그래픽으로 원래 음반 커버가 아닙니다.
-

@@ -134,6 +134,10 @@ public class MainActivity extends Activity {
     showPhoneLyrics = b != null && b.getBoolean("lyrics");
     colors();
     render();
+    if (b == null && !getSharedPreferences("settings", 0).getBoolean("spotlightGuideSeen", false)) {
+      getSharedPreferences("settings", 0).edit().putBoolean("spotlightGuideSeen", true).apply();
+      showSpotlightTutorial();
+    }
     foldTracker =
         new androidx.window.java.layout.WindowInfoTrackerCallbackAdapter(
             androidx.window.layout.WindowInfoTracker.getOrCreate(this));
@@ -463,6 +467,7 @@ public class MainActivity extends Activity {
                 query = "";
                 render();
               });
+      v.setTag("guide-tab-" + label);
       v.setTextSize(11);
       v.setPadding(dp(4), dp(5), dp(4), dp(4));
       PlayerGlyph glyph = new PlayerGlyph(symbols[i], tab.equals(label) ? accent : muted, dp(22));
@@ -557,7 +562,12 @@ public class MainActivity extends Activity {
       backdrop.stop();
       backdrop = null;
     }
-    root = column();
+    if (now) {
+      SwipeDismissLayout playerRoot = new SwipeDismissLayout(this);
+      playerRoot.setOrientation(LinearLayout.VERTICAL);
+      playerRoot.close = () -> { now = false; render(); };
+      root = playerRoot;
+    } else root = column();
     if (previous != null) root.setPadding(previous.getPaddingLeft(), previous.getPaddingTop(), previous.getPaddingRight(), previous.getPaddingBottom());
     else root.setPadding(dp(20), dp(32), dp(20), dp(20));
     root.setBackgroundColor(bg);
@@ -973,6 +983,7 @@ public class MainActivity extends Activity {
       entry.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
       entry.setBackground(new android.graphics.drawable.RippleDrawable(
           android.content.res.ColorStateList.valueOf(0x227788aa), null, shape(android.graphics.Color.WHITE, 14)));
+      entry.setTag("guide-playlist-" + name);
       entry.setOnClickListener(v -> { playlistFilter = name; render(); });
       Runnable menu = () -> new SheetDialog.Builder(this)
           .setTitle(name)
@@ -1331,11 +1342,9 @@ public class MainActivity extends Activity {
       }
     }
     boolean wide = expanded();
-    SwipeDismissLayout top = new SwipeDismissLayout(this);
+    LinearLayout top = row();
     top.setOrientation(LinearLayout.HORIZONTAL);
     top.setGravity(Gravity.CENTER_VERTICAL);
-    top.moving = root;
-    top.close = () -> { now = false; render(); };
     top.addView(
         icon(
             "back",
@@ -1444,6 +1453,7 @@ public class MainActivity extends Activity {
   }
 
   void buildArtwork(LinearLayout parent, Library.Track t) {
+    parent.setTag(null);
     FrameLayout frame = new FrameLayout(this);
     parent.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
     nowArt = new ImageView(this);
@@ -1613,6 +1623,7 @@ public class MainActivity extends Activity {
   }
 
   void buildLyricsPanel(LinearLayout pane, Library.Track t) {
+    pane.setTag("no-player-dismiss");
     pane.setPadding(dp(8), 0, dp(8), 0);
     lyricLabel = text(tr("가사"), 16, muted);
     lyricScroll = new ScrollView(this);
@@ -1684,6 +1695,7 @@ public class MainActivity extends Activity {
       space(lyricContent, 20);
       if (t != null) {
         TextView fetch = button("가사 가져오기", () -> autoLyrics(t));
+        fetch.setTag("guide-fetch-lyrics");
         PlayerGlyph glyph = new PlayerGlyph("download", accent, dp(18));
         glyph.setBounds(0, 0, dp(18), dp(18));
         fetch.setCompoundDrawablesRelative(glyph, null, null, null);
@@ -2339,7 +2351,7 @@ public class MainActivity extends Activity {
     EditText title = new EditText(this);
     title.setHint(tr("곡명"));
     title.setSingleLine();
-    title.setText(t.title);
+    title.setText(t.lyricSearchTitle.isEmpty() ? t.title : t.lyricSearchTitle);
     EditText artist = new EditText(this);
     artist.setHint(tr("가수 이름"));
     artist.setSingleLine();
@@ -2777,7 +2789,7 @@ public class MainActivity extends Activity {
         });
       }
       int step = 0;
-      String source = library.bundledLyrics(asset);
+      String source = tr(library.bundledLyrics(asset));
       if (asset.equals("APACHE-2.0.txt")) {
         TextView license = text(source.replaceAll("(?m)^[ \t]+", ""), 13, ink);
         license.setGravity(Gravity.START);
@@ -2789,16 +2801,22 @@ public class MainActivity extends Activity {
             .setView(license).show();
         return;
       }
+      boolean firstSection = true;
       for (String section : source.split("\\n\\s*\\n")) {
         LinearLayout cardView = column();
-        cardView.setPadding(dp(16), dp(14), dp(16), dp(14));
-        cardView.setBackground(shape(darkTheme ? 0xff2c2c2e : Color.WHITE, 18));
+        if (guide) {
+          cardView.setPadding(dp(14), dp(10), dp(14), dp(10));
+          cardView.setBackground(shape(darkTheme ? 0xff2c2c2e : Color.WHITE, 18));
+        } else {
+          cardView.setPadding(dp(4), firstSection ? 0 : dp(16), dp(4), 0);
+        }
+        firstSection = false;
         int split = section.indexOf('\n');
         if (split > 0 && section.substring(0, split).length() < 45) {
           TextView heading = text((guide ? (++step) + "  " : "") + section.substring(0, split).replaceFirst("^\\d+\\.\\s*", ""), 16, ink);
           heading.setTypeface(null, Typeface.BOLD);
           cardView.addView(heading);
-          space(cardView, 8);
+          space(cardView, guide ? 8 : 4);
           section = section.substring(split + 1);
         }
         android.text.SpannableStringBuilder body = new android.text.SpannableStringBuilder();
@@ -2809,8 +2827,12 @@ public class MainActivity extends Activity {
             String label = clean.contains("creativecommons.org") ? "라이선스 보기 ↗"
                 : clean.contains("commons.wikimedia.org") ? "음원 출처 보기 ↗"
                 : clean.contains("apache.org") ? "Apache 2.0 원문 ↗"
+                : clean.contains("github.com/androidx/media") ? tr("Media3 프로젝트 ↗")
+                : clean.contains("github.com/androidx/androidx") ? tr("AndroidX 프로젝트 ↗")
+                : clean.contains("github.com/google/guava") ? tr("Guava 프로젝트 ↗")
+                : clean.contains("joshwoodward.com") ? tr("Josh Woodward 공식 사이트 ↗")
                 : android.net.Uri.parse(clean).getHost() + " ↗";
-            int start = body.length(); body.append(label);
+            int start = body.length(); body.append(tr(label));
             body.setSpan(new android.text.style.URLSpan(clean), start, body.length(), android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
           } else body.append(line);
         }
@@ -2824,10 +2846,48 @@ public class MainActivity extends Activity {
         copy.setLineSpacing(dp(3), 1.1f);
         cardView.addView(copy);
         sections.addView(cardView, new LinearLayout.LayoutParams(-1, -2));
-        space(sections, 12);
+        if (guide) space(sections, 6);
       }
       new SheetDialog.Builder(this).setTitle(title).setView(sections).show();
     } catch (java.io.IOException e) { toast("안내를 불러오지 못했습니다"); }
+  }
+
+  void showSpotlightTutorial() {
+    now = false; tab = "목록"; playlistFilter = ""; albumFilter = ""; query = "";
+    render();
+      for (String demoName : library.playlists.keySet()) {
+        if (!library.playlists.get(demoName).contains("cool-player-welcome")) continue;
+        final String demo = demoName;
+        root.post(() -> SpotlightGuide.show(this, root.findViewWithTag("guide-tab-목록"),
+            "1 / 4 · 재생목록\n목록 탭에서 체험곡을 찾아보세요.", "목록으로 이동", () -> {
+          tab = "목록"; playlistFilter = ""; albumFilter = ""; now = false; render();
+          root.post(() -> SpotlightGuide.show(this, root.findViewWithTag("guide-playlist-" + demo),
+              "2 / 4 · 체험곡\n체험 재생목록을 열어보세요.", "재생목록 열기", () -> {
+            playlistFilter = demo; query = ""; render();
+            list.post(() -> {
+              Library.Track morning = library.find("cool-player-experience-morning-blue");
+              if (morning == null) { toast("Morning Blue 체험곡을 추가해 주세요."); return; }
+              int index = visible.indexOf(morning);
+              if (index < 0) return;
+              list.setSelection(index);
+              list.post(() -> SpotlightGuide.show(this, list.getChildAt(index - list.getFirstVisiblePosition()),
+                  "3 / 4 · Morning Blue\nMorning Blue를 열고 가사 화면으로 이동하세요.", "Morning Blue 열기", () -> {
+                if (player == null) { toast("재생 준비 후 튜토리얼을 다시 열어주세요."); return; }
+                play(visible, index); now = true; showPhoneLyrics = true; render();
+                root.post(() -> {
+                  View fetch = root.findViewWithTag("guide-fetch-lyrics");
+                  if (fetch == null) { toast("이미 가사가 저장되어 있습니다."); return; }
+                  SpotlightGuide.show(this, fetch,
+                      "4 / 4 · 가사 가져오기\n강조된 ‘가사 가져오기’ 버튼을 눌러 가사를 검색하고 저장하세요.",
+                      "가사 가져오기", fetch::performClick);
+                });
+              }));
+            });
+          }));
+        }));
+        return;
+      }
+    toast("체험 재생목록이 있어야 튜토리얼을 볼 수 있습니다. 사용법에서 체험곡을 추가해 주세요.");
   }
 
   void showUserGuide() {
@@ -2951,6 +3011,7 @@ public class MainActivity extends Activity {
         });
     LinearLayout help = settingsGroup(stack, "사용법 및 정보");
     settingRow(help, "lyrics", "사용법", "", this::showUserGuide);
+    settingRow(help, "info", "튜토리얼 다시 보기", "", this::showSpotlightTutorial);
     settingRow(help, "info", "Cool Player 안내 및 저작권", "", () -> showInfoAsset("Cool Player 안내 및 저작권", "COPYRIGHT.txt"));
     settingRow(help, "music", "체험곡 출처", "", () -> showInfoAsset("체험곡 출처", "DEMO_CREDITS.txt"));
     settingRow(help, "info", "오픈소스 고지", "", () ->
@@ -2968,7 +3029,7 @@ public class MainActivity extends Activity {
             new SheetDialog.Builder(this)
                 .setTitle("Cool Player " + appVersion())
                 .setMessage(
-                    "기기에 담긴 음악과 가사를 함께 즐기는 플레이어.\n\n사용 방법과 지원 기능은 설정의 사용법에서 확인할 수 있습니다.")
+                    "음악 재생\n기기에서 선택한 음악 파일과 폴더를 보관함에 추가해 재생합니다. 곡·앨범·즐겨찾기·재생목록으로 음악을 탐색하고, 재생 대기열에서 다음에 들을 곡을 관리할 수 있습니다.\n\n가사\n시간 정보가 있는 가사는 재생 위치에 맞춰 표시됩니다. 가사 자동 가져오기와 수동 검색, LRC·TXT 파일 불러오기·편집·내보내기를 지원하며 글자 크기와 표시 타이밍을 조절할 수 있습니다.\n\n재생 설정\n셔플·반복 재생, 재생 속도, 취침 타이머와 앱 이퀄라이저를 제공합니다. 홈 화면 위젯에서도 재생을 제어하고 재생목록을 열 수 있습니다. 오디오 효과는 기기 지원 여부에 따라 달라질 수 있습니다.\n\n파일 관리\n보관함이나 재생목록에서 제거하는 동작과 기기의 원본 파일을 삭제하는 동작은 구분됩니다. 파일 삭제를 선택하고 경고를 확인한 경우 음악과 연결된 가사 파일이 삭제될 수 있습니다. 자세한 조작은 설정의 사용법에서 확인하세요.")
                 .setPositiveButton("확인", null)
                 .show());
     settingRow(
@@ -2980,9 +3041,9 @@ public class MainActivity extends Activity {
             new SheetDialog.Builder(this)
                 .setTitle("데이터와 저장")
                 .setMessage(
-                    "내 음악\n선택한 원본 음악 파일은 기존 폴더에 보관됩니다. 앱에서 원본 파일을 임의로 삭제하지 않습니다.\n\n"
+                    "내 음악\n가져온 원본 음악은 선택한 위치에 유지됩니다. 보관함에서 제거해도 원본은 남습니다. ‘파일 삭제’를 선택하고 확인하면 기기의 원본 음악과 연결된 가사 파일을 삭제합니다.\n\n"
                         + "가사 보관\n가사 메뉴의 ‘가사 파일 내보내기’에서 원하는 폴더에 LRC 또는 TXT 파일로 보관할 수 있습니다.\n\n"
-                        + "앱 보관함\n재생목록과 앱에서 편집한 정보는 앱 전용 공간에 저장됩니다. 앱을 제거하기 전 보관할 가사는 파일로 내보내 주세요.")
+                        + "앱 보관함\n재생목록·설정·앱에서 저장한 가사와 변경한 앨범아트는 앱 전용 공간에 저장됩니다. 별도로 보관할 가사는 파일로 내보내세요. 사용자가 외부 폴더에 보관한 원본 파일과 앱 전용 데이터는 저장 위치가 다릅니다.")
                 .setPositiveButton("확인", null)
                 .show());
     settingRow(

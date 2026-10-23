@@ -868,7 +868,7 @@
     "ライセンスを見る ↗"
   ],
   "음원 출처 보기 ↗": [
-    "View audio source ↗",
+    "Recording source ↗",
     "音源の出典を見る ↗"
   ],
   "원본 파일 삭제": [
@@ -1054,5 +1054,257 @@
   "선택한 음색은 Cool Player 재생에 적용됩니다.": [
     "Your selection applies to playback in Cool Player.",
     "選択した音質はCool Playerの再生に適用されます。"
+  ],
+  "튜토리얼 다시 보기": [
+    "Replay tutorial",
+    "Replay tutorial"
+  ],
+  "건너뛰기": [
+    "Skip",
+    "Skip"
+  ],
+  "가사 시작하기": [
+    "Get started with lyrics",
+    "Get started with lyrics"
+  ],
+  "목록으로 이동": [
+    "Open playlists",
+    "Open playlists"
+  ],
+  "Morning Blue 열기": [
+    "Open Morning Blue",
+    "Open Morning Blue"
+  ],
+  "수동 검색": [
+    "Search manually",
+    "Search manually"
+  ],
+  "재생목록만 삭제": [
+    "Delete playlist only",
+    "Delete playlist only"
+  ],
+  "음악 파일도 함께 삭제": [
+    "Also delete music files",
+    "Also delete music files"
+  ],
+  "파일까지 삭제": [
+    "Delete files too",
+    "Delete files too"
+  ],
+  "이미 가사가 저장되어 있습니다.": [
+    "Lyrics are already saved.",
+    "Lyrics are already saved."
+  ],
+  "재생목록 메뉴": [
+    "Playlist menu",
+    "Playlist menu"
+  ],
+  "Media3 프로젝트 ↗": [
+    "Media3 project ↗",
+    "Media3 project ↗"
+  ],
+  "AndroidX 프로젝트 ↗": [
+    "AndroidX project ↗",
+    "AndroidX project ↗"
+  ],
+  "Guava 프로젝트 ↗": [
+    "Guava project ↗",
+    "Guava project ↗"
+  ],
+  "Josh Woodward 공식 사이트 ↗": [
+    "Josh Woodward official website ↗",
+    "Josh Woodward official website ↗"
+  ],
+  "Apache 2.0 원문 ↗": [
+    "Apache 2.0 license text ↗",
+    "Apache 2.0 license text ↗"
+  ],
+  "앱 소개": [
+    "About the app",
+    "About the app"
+  ],
+  "사용자 콘텐츠": [
+    "Your content",
+    "Your content"
+  ],
+  "체험곡": [
+    "Demo songs",
+    "Demo songs"
+  ],
+  "공개 조건": [
+    "License",
+    "License"
+  ],
+  "앱에 사용한 형태": [
+    "Modifications",
+    "Modifications"
+  ],
+  "오픈소스 구성요소": [
+    "Open-source components",
+    "Open-source components"
+  ],
+  "기기에 보관한 음악을 재생하고, 가사를 함께 보며 재생목록을 관리하는 음악 플레이어입니다.": [
+    "Play music stored on your device, view lyrics and manage playlists.",
+    "Play music stored on your device, view lyrics and manage playlists."
+  ],
+  "사용자가 가져온 음악·앨범아트·가사의 권리는 각 권리자에게 있습니다.": [
+    "Rights to imported music, artwork and lyrics remain with their respective rights holders.",
+    "Rights to imported music, artwork and lyrics remain with their respective rights holders."
+  ],
+  "Cool Player를 사용한다고 해당 콘텐츠의 권리가 앱으로 이전되지 않습니다.": [
+    "Using Cool Player does not transfer ownership of your content.",
+    "Using Cool Player does not transfer ownership of your content."
+  ],
+  "앱에 포함된 체험곡의 제작자와 이용 조건은 ‘체험곡 출처’에서 확인할 수 있습니다.": [
+    "See Demo song credits for attribution and license information.",
+    "See Demo song credits for attribution and license information."
+  ],
+  "아티스트: Rocks From The Garden": [
+    "Artist: Rocks From The Garden",
+    "Artist: Rocks From The Garden"
+  ],
+  "보컬: Joannie · 기타: Randy": [
+    "Vocals: Joannie · Guitar: Randy",
+    "Vocals: Joannie · Guitar: Randy"
+  ],
+  "녹음 공개일: 2006년 6월 3일": [
+    "Recording published: June 3, 2006",
+    "Recording published: June 3, 2006"
+  ],
+  "Wikimedia Commons에서 PD-author로 공개된 녹음입니다. 원문 곡과 가사는 퍼블릭 도메인입니다.": [
+    "Recording released under PD-author on Wikimedia Commons. The original composition and lyrics are in the public domain.",
+    "Recording released under PD-author on Wikimedia Commons. The original composition and lyrics are in the public domain."
+  ],
+  "첫 절 37초를 발췌하고 페이드 처리 및 MP3 변환을 했습니다.": [
+    "Modified: 37-second excerpt, fade and MP3 conversion.",
+    "Modified: 37-second excerpt, fade and MP3 conversion."
+  ],
+  "아티스트·작곡·작사: Josh Woodward": [
+    "Artist, music and lyrics: Josh Woodward",
+    "Artist, music and lyrics: Josh Woodward"
+  ],
+  "앨범: The Simple Life, Part 1 (2008)": [
+    "Album: The Simple Life, Part 1 (2008)",
+    "Album: The Simple Life, Part 1 (2008)"
+  ],
+  "라이선스: CC BY 3.0 US": [
+    "License: CC BY 3.0 US",
+    "License: CC BY 3.0 US"
+  ],
+  "원본 OGG 녹음을 MP3로 변환했습니다.": [
+    "Modified: OGG recording converted to MP3.",
+    "Modified: OGG recording converted to MP3."
+  ],
+  "동기화 시간 정보: Cool Player": [
+    "Lyrics timing: Cool Player",
+    "Lyrics timing: Cool Player"
+  ],
+  "제작자가 앱을 보증한다는 의미는 아닙니다.": [
+    "No endorsement by the artist is implied.",
+    "No endorsement by the artist is implied."
+  ],
+  "다음 라이선스는 앱에 포함된 외부 라이브러리에 적용됩니다. Cool Player 자체의 이용약관이 아닙니다.": [
+    "These licenses apply to included third-party libraries. They are not the terms of use for Cool Player.",
+    "These licenses apply to included third-party libraries. They are not the terms of use for Cool Player."
+  ],
+  "AndroidX Core, Window, Annotation, Media3 및 Google Guava: Apache License 2.0. 각 프로젝트의 저작권과 라이선스 조건이 적용됩니다.": [
+    "AndroidX Core, Window, Annotation, Media3 and Google Guava: Apache License 2.0. Each project retains its copyright and license terms.",
+    "AndroidX Core, Window, Annotation, Media3 and Google Guava: Apache License 2.0. Each project retains its copyright and license terms."
+  ],
+  "1 / 4 · 재생목록": [
+    "1 / 4 · Playlists",
+    "1 / 4 · Playlists"
+  ],
+  "목록 탭에서 체험곡을 찾아보세요.": [
+    "Find the demo songs in the Playlists tab.",
+    "Find the demo songs in the Playlists tab."
+  ],
+  "2 / 4 · 체험곡": [
+    "2 / 4 · Demo songs",
+    "2 / 4 · Demo songs"
+  ],
+  "체험 재생목록을 열어보세요.": [
+    "Open the demo playlist.",
+    "Open the demo playlist."
+  ],
+  "3 / 4 · Morning Blue": [
+    "3 / 4 · Morning Blue",
+    "3 / 4 · Morning Blue"
+  ],
+  "Morning Blue를 열고 가사 화면으로 이동하세요.": [
+    "Open Morning Blue and switch to lyrics.",
+    "Open Morning Blue and switch to lyrics."
+  ],
+  "4 / 4 · 가사 가져오기": [
+    "4 / 4 · Import lyrics",
+    "4 / 4 · Import lyrics"
+  ],
+  "강조된 ‘가사 가져오기’ 버튼을 눌러 가사를 검색하고 저장하세요.": [
+    "Tap the highlighted Import lyrics button to find and save lyrics.",
+    "Tap the highlighted Import lyrics button to find and save lyrics."
+  ],
+  "Cool Player\nCopyright © 2026 Cool Player.\n\n앱 소개\n기기에 보관한 음악을 재생하고, 가사를 함께 보며 재생목록을 관리하는 음악 플레이어입니다.\n\n사용자 콘텐츠\n사용자가 가져온 음악·앨범아트·가사의 권리는 각 권리자에게 있습니다.\nCool Player를 사용한다고 해당 콘텐츠의 권리가 앱으로 이전되지 않습니다.\n\n체험곡\n앱에 포함된 체험곡의 제작자와 이용 조건은 ‘체험곡 출처’에서 확인할 수 있습니다.\n": [
+    "Cool Player\nCopyright © 2026 Cool Player.\n\nAbout the app\nPlay music stored on your device, view lyrics and manage playlists.\n\nYour content\nRights to imported music, artwork and lyrics remain with their respective rights holders.\nUsing Cool Player does not transfer ownership of your content.\n\nDemo songs\nSee Demo song credits for attribution and license information.\n",
+    "Cool Player\nCopyright © 2026 Cool Player.\n\nAbout the app\nPlay music stored on your device, view lyrics and manage playlists.\n\nYour content\nRights to imported music, artwork and lyrics remain with their respective rights holders.\nUsing Cool Player does not transfer ownership of your content.\n\nDemo songs\nSee Demo song credits for attribution and license information.\n"
+  ],
+  "Amazing Grace\n아티스트: Rocks From The Garden\n보컬: Joannie · 기타: Randy\n녹음 공개일: 2006년 6월 3일\nWikimedia Commons에서 PD-author로 공개된 녹음입니다. 원문 곡과 가사는 퍼블릭 도메인입니다.\n첫 절 37초를 발췌하고 페이드 처리 및 MP3 변환을 했습니다.\nhttps://commons.wikimedia.org/wiki/File:Amazing_Grace_with_vocals_and_guitar_by_Rocks_From_The_Garden_-_20060603.ogg\n\nMorning Blue\n아티스트·작곡·작사: Josh Woodward\n앨범: The Simple Life, Part 1 (2008)\n라이선스: CC BY 3.0 US\n원본 OGG 녹음을 MP3로 변환했습니다.\n동기화 시간 정보: Cool Player\n제작자가 앱을 보증한다는 의미는 아닙니다.\nhttps://www.joshwoodward.com/\nhttps://commons.wikimedia.org/wiki/File:Josh_Woodward_-_The_Simple_Life,_Part_1_-_08_-_Morning_Blue.ogg\nhttps://creativecommons.org/licenses/by/3.0/us/\n": [
+    "Amazing Grace\nArtist: Rocks From The Garden\nVocals: Joannie · Guitar: Randy\nRecording published: June 3, 2006\nRecording released under PD-author on Wikimedia Commons. The original composition and lyrics are in the public domain.\nModified: 37-second excerpt, fade and MP3 conversion.\nhttps://commons.wikimedia.org/wiki/File:Amazing_Grace_with_vocals_and_guitar_by_Rocks_From_The_Garden_-_20060603.ogg\n\nMorning Blue\nArtist, music and lyrics: Josh Woodward\nAlbum: The Simple Life, Part 1 (2008)\nLicense: CC BY 3.0 US\nModified: OGG recording converted to MP3.\nLyrics timing: Cool Player\nNo endorsement by the artist is implied.\nhttps://www.joshwoodward.com/\nhttps://commons.wikimedia.org/wiki/File:Josh_Woodward_-_The_Simple_Life,_Part_1_-_08_-_Morning_Blue.ogg\nhttps://creativecommons.org/licenses/by/3.0/us/\n",
+    "Amazing Grace\nArtist: Rocks From The Garden\nVocals: Joannie · Guitar: Randy\nRecording published: June 3, 2006\nRecording released under PD-author on Wikimedia Commons. The original composition and lyrics are in the public domain.\nModified: 37-second excerpt, fade and MP3 conversion.\nhttps://commons.wikimedia.org/wiki/File:Amazing_Grace_with_vocals_and_guitar_by_Rocks_From_The_Garden_-_20060603.ogg\n\nMorning Blue\nArtist, music and lyrics: Josh Woodward\nAlbum: The Simple Life, Part 1 (2008)\nLicense: CC BY 3.0 US\nModified: OGG recording converted to MP3.\nLyrics timing: Cool Player\nNo endorsement by the artist is implied.\nhttps://www.joshwoodward.com/\nhttps://commons.wikimedia.org/wiki/File:Josh_Woodward_-_The_Simple_Life,_Part_1_-_08_-_Morning_Blue.ogg\nhttps://creativecommons.org/licenses/by/3.0/us/\n"
+  ],
+  "오픈소스 구성요소\n다음 라이선스는 앱에 포함된 외부 라이브러리에 적용됩니다. Cool Player 자체의 이용약관이 아닙니다.\nAndroidX Core, Window, Annotation, Media3 및 Google Guava: Apache License 2.0. 각 프로젝트의 저작권과 라이선스 조건이 적용됩니다.\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://github.com/androidx/media\nhttps://github.com/androidx/androidx\nhttps://github.com/google/guava\n\n": [
+    "Open-source components\nThese licenses apply to included third-party libraries. They are not the terms of use for Cool Player.\nAndroidX Core, Window, Annotation, Media3 and Google Guava: Apache License 2.0. Each project retains its copyright and license terms.\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://github.com/androidx/media\nhttps://github.com/androidx/androidx\nhttps://github.com/google/guava\n\n",
+    "Open-source components\nThese licenses apply to included third-party libraries. They are not the terms of use for Cool Player.\nAndroidX Core, Window, Annotation, Media3 and Google Guava: Apache License 2.0. Each project retains its copyright and license terms.\nhttps://www.apache.org/licenses/LICENSE-2.0\nhttps://github.com/androidx/media\nhttps://github.com/androidx/androidx\nhttps://github.com/google/guava\n\n"
+  ],
+  "음악 재생": [
+    "Music playback",
+    "Music playback"
+  ],
+  "기기에서 선택한 음악 파일과 폴더를 보관함에 추가해 재생합니다. 곡·앨범·즐겨찾기·재생목록으로 음악을 탐색하고, 재생 대기열에서 다음에 들을 곡을 관리할 수 있습니다.": [
+    "Add music files and folders from your device to your library. Browse songs, albums, favorites and playlists, and manage upcoming songs in the playback queue.",
+    "Add music files and folders from your device to your library. Browse songs, albums, favorites and playlists, and manage upcoming songs in the playback queue."
+  ],
+  "시간 정보가 있는 가사는 재생 위치에 맞춰 표시됩니다. 가사 자동 가져오기와 수동 검색, LRC·TXT 파일 불러오기·편집·내보내기를 지원하며 글자 크기와 표시 타이밍을 조절할 수 있습니다.": [
+    "Timed lyrics follow the playback position. Import lyrics automatically, search manually, or import, edit and export LRC and TXT files. Adjust the lyric font size and timing.",
+    "Timed lyrics follow the playback position. Import lyrics automatically, search manually, or import, edit and export LRC and TXT files. Adjust the lyric font size and timing."
+  ],
+  "재생 설정": [
+    "Playback settings",
+    "Playback settings"
+  ],
+  "셔플·반복 재생, 재생 속도, 취침 타이머와 앱 이퀄라이저를 제공합니다. 홈 화면 위젯에서도 재생을 제어하고 재생목록을 열 수 있습니다. 오디오 효과는 기기 지원 여부에 따라 달라질 수 있습니다.": [
+    "Use shuffle, repeat, playback speed, a sleep timer and the in-app equalizer. Home screen widgets offer playback controls and playlist access. Audio effects depend on device support.",
+    "Use shuffle, repeat, playback speed, a sleep timer and the in-app equalizer. Home screen widgets offer playback controls and playlist access. Audio effects depend on device support."
+  ],
+  "파일 관리": [
+    "File management",
+    "File management"
+  ],
+  "보관함이나 재생목록에서 제거하는 동작과 기기의 원본 파일을 삭제하는 동작은 구분됩니다. 파일 삭제를 선택하고 경고를 확인한 경우 음악과 연결된 가사 파일이 삭제될 수 있습니다. 자세한 조작은 설정의 사용법에서 확인하세요.": [
+    "Removing an entry from the library or a playlist is separate from deleting its original file. Choosing file deletion and confirming the warning may delete the music and linked lyric files. See User guide in Settings for instructions.",
+    "Removing an entry from the library or a playlist is separate from deleting its original file. Choosing file deletion and confirming the warning may delete the music and linked lyric files. See User guide in Settings for instructions."
+  ],
+  "내 음악": [
+    "My music",
+    "My music"
+  ],
+  "가사 보관": [
+    "Keeping lyrics",
+    "Keeping lyrics"
+  ],
+  "앱 보관함": [
+    "App storage",
+    "App storage"
+  ],
+  "가져온 원본 음악은 선택한 위치에 유지됩니다. 보관함에서 제거해도 원본은 남습니다. ‘파일 삭제’를 선택하고 확인하면 기기의 원본 음악과 연결된 가사 파일을 삭제합니다.": [
+    "Imported music stays in its selected location. Removing a library entry preserves the original. Choosing Delete files and confirming deletes the original music and linked lyric files.",
+    "Imported music stays in its selected location. Removing a library entry preserves the original. Choosing Delete files and confirming deletes the original music and linked lyric files."
+  ],
+  "가사 메뉴의 ‘가사 파일 내보내기’에서 원하는 폴더에 LRC 또는 TXT 파일로 보관할 수 있습니다.": [
+    "Choose Export lyrics in the lyrics menu to save an LRC or TXT file to a folder you select.",
+    "Choose Export lyrics in the lyrics menu to save an LRC or TXT file to a folder you select."
+  ],
+  "재생목록·설정·앱에서 저장한 가사와 변경한 앨범아트는 앱 전용 공간에 저장됩니다. 별도로 보관할 가사는 파일로 내보내세요. 사용자가 외부 폴더에 보관한 원본 파일과 앱 전용 데이터는 저장 위치가 다릅니다.": [
+    "Playlists, settings, saved lyrics and custom artwork are stored in app-specific storage. Export lyrics that you want to keep separately. Original files kept in external folders are stored separately from app data.",
+    "Playlists, settings, saved lyrics and custom artwork are stored in app-specific storage. Export lyrics that you want to keep separately. Original files kept in external folders are stored separately from app data."
   ]
 }

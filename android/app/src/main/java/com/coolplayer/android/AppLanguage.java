@@ -26,7 +26,7 @@ final class AppLanguage {
     if (lang.equals("ko")) return source;
     try {
       if (words == null) words = read(c,"translations.json");
-      if (!lang.equals("en") && !lang.equals("ja")) {
+      if (!lang.equals("en") && !lang.equals("ko")) {
         if (!extra.containsKey(lang)) {
           try { extra.put(lang,read(c,"translations-"+lang+".json")); }
           catch (Exception e) { extra.put(lang,new JSONObject()); }

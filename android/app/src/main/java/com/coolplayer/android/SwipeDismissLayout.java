@@ -24,11 +24,26 @@ final class SwipeDismissLayout extends LinearLayout {
     }
     return false;
   }
+  boolean excluded(View view, float x, float y) {
+    if ("no-player-dismiss".equals(view.getTag()) || view instanceof android.widget.SeekBar) return true;
+    if (view instanceof ViewGroup) {
+      ViewGroup group = (ViewGroup) view;
+      for (int i = group.getChildCount() - 1; i >= 0; i--) {
+        View child = group.getChildAt(i);
+        if (child.getVisibility() != View.VISIBLE) continue;
+        float cx = x + group.getScrollX() - child.getLeft();
+        float cy = y + group.getScrollY() - child.getTop();
+        if (cx >= 0 && cy >= 0 && cx < child.getWidth() && cy < child.getHeight()
+            && excluded(child, cx, cy)) return true;
+      }
+    }
+    return false;
+  }
   @Override public boolean dispatchTouchEvent(MotionEvent e) {
     int action = e.getActionMasked();
     if (action == MotionEvent.ACTION_DOWN) {
       startX = e.getRawX(); startY = e.getRawY(); dragging = false;
-      eligible = !scrollsUp(this, e.getX(), e.getY());
+      eligible = !excluded(this, e.getX(), e.getY()) && !scrollsUp(this, e.getX(), e.getY());
       if (moving != null) moving.animate().cancel();
     }
     float dy = e.getRawY() - startY;

@@ -197,6 +197,11 @@ final class SheetDialog extends Dialog {
     setCanceledOnTouchOutside(true);
   }
 
+  @Override public boolean dispatchTouchEvent(MotionEvent event) {
+    KeyboardDismiss.outside(getWindow(), event);
+    return super.dispatchTouchEvent(event);
+  }
+
   void style(View v) {
     if (v instanceof ListView) {
       v.setOnTouchListener(

@@ -78,6 +78,12 @@ public class MainActivity extends Activity {
         }
       };
 
+  boolean compactLandscapePlayer() {
+    Configuration configuration = getResources().getConfiguration();
+    return configuration.screenWidthDp > configuration.screenHeightDp
+        && configuration.screenHeightDp < 480;
+  }
+
   boolean expanded() {
     return getResources().getConfiguration().screenWidthDp >= 600;
   }
@@ -248,6 +254,11 @@ public class MainActivity extends Activity {
     navigateBack();
   }
 
+  @Override public boolean dispatchTouchEvent(MotionEvent event) {
+    KeyboardDismiss.outside(getWindow(), event);
+    return super.dispatchTouchEvent(event);
+  }
+
   void navigateBack() {
     if (now && fullLyrics) { fullLyrics = false; render(); }
     else if (now) {
@@ -271,7 +282,7 @@ public class MainActivity extends Activity {
             || theme.equals("system")
                 && (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                     == Configuration.UI_MODE_NIGHT_YES;
-    if (now && fullLyrics) dark = true;
+    if (now && (fullLyrics || compactLandscapePlayer())) dark = true;
     darkTheme = dark;
     bg = Color.parseColor(dark ? "#15181E" : "#FAFBFD");
     card = Color.parseColor(dark ? "#232831" : "#EEF2F7");
@@ -577,7 +588,7 @@ public class MainActivity extends Activity {
     root.setBackgroundColor(bg);
     if (now) {
       backdrop = new ArtworkBackdrop(darkTheme, wasNow ? previousBackdrop : null);
-      backdrop.artworkEnabled = fullLyrics;
+      backdrop.artworkEnabled = fullLyrics || compactLandscapePlayer();
       root.setBackground(backdrop);
     }
     if (screenHost == null) {
@@ -666,7 +677,11 @@ public class MainActivity extends Activity {
     root.addView(libraryViewport, new LinearLayout.LayoutParams(-1, 0, 1));
     libraryViewport.addView(shell, new FrameLayout.LayoutParams(-1, -1));
     if (expanded()) {
-      shell.addView(navigation(true), new LinearLayout.LayoutParams(dp(76), -1));
+      ScrollView navigationScroll = new ScrollView(this);
+      navigationScroll.setVerticalScrollBarEnabled(false);
+      navigationScroll.setClipToPadding(false);
+      navigationScroll.addView(navigation(true), new ScrollView.LayoutParams(-1, -2));
+      shell.addView(navigationScroll, new LinearLayout.LayoutParams(dp(76), -1));
       Space gap = new Space(this);
       shell.addView(gap, new LinearLayout.LayoutParams(dp(20), 1));
     }
@@ -687,14 +702,14 @@ public class MainActivity extends Activity {
         dock.addView(navigation(false));
       }
       libraryViewport.addView(dock, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
-      // Reserve the measured dock height, including enlarged accessibility text.
-      View scrollContent = list != null && list.getParent() == body ? list : body;
-      if (scrollContent instanceof ListView) ((ListView) scrollContent).setClipToPadding(false);
+      // Reserve dock space for both navigation and library content, not only the song list.
       dock.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
         int bottom = b - t + dp(8);
-        if (scrollContent.getPaddingBottom() != bottom)
-          scrollContent.setPadding(scrollContent.getPaddingLeft(), scrollContent.getPaddingTop(),
-              scrollContent.getPaddingRight(), bottom);
+        FrameLayout.LayoutParams shellParams = (FrameLayout.LayoutParams) shell.getLayoutParams();
+        if (shellParams.bottomMargin != bottom) {
+          shellParams.bottomMargin = bottom;
+          shell.setLayoutParams(shellParams);
+        }
       });
     }
     updatePlayback();
@@ -709,6 +724,7 @@ public class MainActivity extends Activity {
     LinearLayout search = row();
     EditText input = new EditText(this);
     input.setSingleLine(true);
+    KeyboardDismiss.done(input);
     input.setTextSize(15);
     input.setTextColor(ink);
     input.setHintTextColor(muted);
@@ -1266,6 +1282,7 @@ public class MainActivity extends Activity {
     input.setHint(tr(title));
     input.setMinHeight(dp(52));
     input.setSingleLine();
+    KeyboardDismiss.done(input);
     new SheetDialog.Builder(this)
         .setTitle(title)
         .setView(input)
@@ -1493,6 +1510,11 @@ public class MainActivity extends Activity {
 
   void buildArtwork(LinearLayout parent, Library.Track t) {
     parent.setTag(null);
+    if (compactLandscapePlayer()) {
+      nowArt = null;
+      parent.setGravity(Gravity.CENTER_VERTICAL);
+      return;
+    }
     FrameLayout frame = new FrameLayout(this);
     parent.addView(frame, new LinearLayout.LayoutParams(-1, 0, 1));
     nowArt = new ImageView(this);

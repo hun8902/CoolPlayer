@@ -1306,5 +1306,13 @@
   "재생목록·설정·앱에서 저장한 가사와 변경한 앨범아트는 앱 전용 공간에 저장됩니다. 별도로 보관할 가사는 파일로 내보내세요. 사용자가 외부 폴더에 보관한 원본 파일과 앱 전용 데이터는 저장 위치가 다릅니다.": [
     "Playlists, settings, saved lyrics and custom artwork are stored in app-specific storage. Export lyrics that you want to keep separately. Original files kept in external folders are stored separately from app data.",
     "Playlists, settings, saved lyrics and custom artwork are stored in app-specific storage. Export lyrics that you want to keep separately. Original files kept in external folders are stored separately from app data."
+  ],
+  "앨범아트 배경 (테스트)": [
+    "Album artwork background (test)",
+    "アルバムアート背景（テスト）"
+  ],
+  "전체 화면 가사": [
+    "Full-screen lyrics",
+    "全画面歌詞"
   ]
 }

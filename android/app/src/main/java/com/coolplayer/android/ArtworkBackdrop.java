@@ -10,6 +10,8 @@ final class ArtworkBackdrop extends Drawable {
   private final int[] colors = new int[3];
   private ValueAnimator blend;
   private int opacity = 255;
+  boolean artworkEnabled;
+  private Bitmap backgroundArt;
 
   ArtworkBackdrop(boolean dark) {
     int base = dark ? 0xff18202e : 0xffe9edf4;
@@ -29,6 +31,16 @@ final class ArtworkBackdrop extends Drawable {
   }
 
   void album(Bitmap bitmap, boolean dark) {
+    if (artworkEnabled) {
+      int width = Math.min(512, bitmap.getWidth());
+      int height = Math.max(1, Math.round(bitmap.getHeight() * (width / (float) bitmap.getWidth())));
+      Bitmap scaled = Bitmap.createScaledBitmap(bitmap, width, height, true);
+      Bitmap owned = scaled.copy(Bitmap.Config.ARGB_8888, false);
+      if (scaled != bitmap) scaled.recycle();
+      if (backgroundArt != null) backgroundArt.recycle();
+      backgroundArt = owned;
+      invalidateSelf();
+    }
     int[] target = new int[3];
     long[][] sums = new long[3][4];
     for (int y = 0; y < bitmap.getHeight(); y += Math.max(1, bitmap.getHeight() / 32))
@@ -71,6 +83,7 @@ final class ArtworkBackdrop extends Drawable {
 
   void stop() {
     if (blend != null) blend.cancel();
+    if (backgroundArt != null) { backgroundArt.recycle(); backgroundArt = null; }
   }
 
   @Override
@@ -78,6 +91,20 @@ final class ArtworkBackdrop extends Drawable {
     Rect b = getBounds();
     float w = b.width(), h = b.height();
     if (w <= 0 || h <= 0) return;
+    if (artworkEnabled && backgroundArt != null && !backgroundArt.isRecycled()) {
+      float scale = Math.max(w / backgroundArt.getWidth(), h / backgroundArt.getHeight());
+      float iw = backgroundArt.getWidth() * scale, ih = backgroundArt.getHeight() * scale;
+      RectF destination = new RectF(b.left + (w-iw)/2, b.top + (h-ih)/2,
+          b.left + (w+iw)/2, b.top + (h+ih)/2);
+      paint.setShader(null); paint.setAlpha(opacity); paint.setFilterBitmap(true);
+      canvas.drawBitmap(backgroundArt, null, destination, paint);
+      paint.setColor(0xB8000000);
+      canvas.drawRect(b, paint);
+      paint.setShader(new LinearGradient(0, b.top, 0, b.bottom,
+          0x18000000, 0x99000000, Shader.TileMode.CLAMP));
+      canvas.drawRect(b, paint); paint.setShader(null);
+      return;
+    }
     paint.setAlpha(opacity);
     paint.setShader(new LinearGradient(0, 0, w, h, colors[0], colors[2], Shader.TileMode.CLAMP));
     canvas.drawRect(b, paint);

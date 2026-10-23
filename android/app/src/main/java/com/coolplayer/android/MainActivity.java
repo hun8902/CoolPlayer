@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
       lyricLabel;
   ImageView nowArt, miniArt;
   boolean showPhoneLyrics = false;
+  boolean fullLyrics = false;
   long lyricTouchUntil = 0;
   androidx.window.java.layout.WindowInfoTrackerCallbackAdapter foldTracker;
   android.graphics.Rect foldBounds = new android.graphics.Rect();
@@ -248,7 +249,8 @@ public class MainActivity extends Activity {
   }
 
   void navigateBack() {
-    if (now) {
+    if (now && fullLyrics) { fullLyrics = false; render(); }
+    else if (now) {
       now = false;
       render();
     } else if (!albumFilter.isEmpty() || !playlistFilter.isEmpty()) {
@@ -269,6 +271,7 @@ public class MainActivity extends Activity {
             || theme.equals("system")
                 && (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
                     == Configuration.UI_MODE_NIGHT_YES;
+    if (now && fullLyrics) dark = true;
     darkTheme = dark;
     bg = Color.parseColor(dark ? "#15181E" : "#FAFBFD");
     card = Color.parseColor(dark ? "#232831" : "#EEF2F7");
@@ -550,6 +553,7 @@ public class MainActivity extends Activity {
 
   void render() {
     if (destroyed) return;
+    colors();
     LinearLayout previous = root;
     ArtworkBackdrop previousBackdrop = backdrop;
     boolean wasNow = renderedNow, wasLyrics = renderedLyrics;
@@ -565,7 +569,7 @@ public class MainActivity extends Activity {
     if (now) {
       SwipeDismissLayout playerRoot = new SwipeDismissLayout(this);
       playerRoot.setOrientation(LinearLayout.VERTICAL);
-      playerRoot.close = () -> { now = false; render(); };
+      playerRoot.close = () -> { if (fullLyrics) fullLyrics = false; else now = false; render(); };
       root = playerRoot;
     } else root = column();
     if (previous != null) root.setPadding(previous.getPaddingLeft(), previous.getPaddingTop(), previous.getPaddingRight(), previous.getPaddingBottom());
@@ -573,6 +577,7 @@ public class MainActivity extends Activity {
     root.setBackgroundColor(bg);
     if (now) {
       backdrop = new ArtworkBackdrop(darkTheme, wasNow ? previousBackdrop : null);
+      backdrop.artworkEnabled = fullLyrics;
       root.setBackground(backdrop);
     }
     if (screenHost == null) {
@@ -1318,6 +1323,39 @@ public class MainActivity extends Activity {
         .show();
   }
 
+  void renderFullLyrics(Library.Track t) {
+    LinearLayout header = row();
+    header.addView(icon("back", "플레이어로 돌아가기", () -> { fullLyrics = false; render(); }));
+    LinearLayout names = column();
+    nowTitle = text(t == null ? "" : t.title, 18, ink);
+    nowTitle.setTypeface(null, Typeface.BOLD); nowTitle.setGravity(Gravity.CENTER);
+    nowArtist = text(t == null ? "" : t.artist, 14, muted); nowArtist.setGravity(Gravity.CENTER);
+    names.addView(nowTitle); names.addView(nowArtist);
+    header.addView(names, new LinearLayout.LayoutParams(0, -2, 1));
+    header.addView(icon("more", "가사", () -> { if (current() != null) lyricsMenu(current()); }));
+    root.addView(header);
+    space(root, 16);
+    LinearLayout lyrics = column();
+    root.addView(lyrics, new LinearLayout.LayoutParams(-1, 0, 1));
+    buildLyricsPanel(lyrics, t);
+    LinearLayout transport = column();
+    buildTransport(transport, t);
+    // Full view keeps the timeline and three transport buttons only.
+    LinearLayout transportPanel = (LinearLayout) transport.getChildAt(0);
+    // buildTransport adds a panel to its parent; metadata belongs to that panel.
+    if (transportPanel.getChildCount() >= 2) {
+      transportPanel.removeViewAt(0);
+      transportPanel.removeViewAt(0);
+    }
+    View last = transportPanel.getChildAt(transportPanel.getChildCount() - 1);
+    if (last instanceof LinearLayout) {
+      LinearLayout controls = (LinearLayout) last;
+      controls.removeView(shuffleButton); controls.removeView(repeatButton);
+    }
+    root.addView(transport, new LinearLayout.LayoutParams(-1, -2));
+    for (TextView line : lyricViews) { line.setTextSize(Math.max(24, lyricFontSize())); line.setTypeface(null, Typeface.BOLD); }
+  }
+
   void renderNow() {
     Library.Track t = current();
     if (t != null && !t.art.isEmpty() && backdrop != null) {
@@ -1329,7 +1367,7 @@ public class MainActivity extends Activity {
         io.execute(
             () -> {
               BitmapFactory.Options options = new BitmapFactory.Options();
-              options.inSampleSize = 16;
+              options.inSampleSize = destination.artworkEnabled ? 2 : 16;
               Bitmap image = BitmapFactory.decodeFile(path, options);
               if (image != null)
                 runOnUiThread(
@@ -1341,6 +1379,7 @@ public class MainActivity extends Activity {
             });
       }
     }
+    if (fullLyrics) { renderFullLyrics(t); return; }
     boolean wide = expanded();
     LinearLayout top = row();
     top.setOrientation(LinearLayout.HORIZONTAL);
@@ -1735,6 +1774,7 @@ public class MainActivity extends Activity {
   void updatePlayback() {
     if (player == null) return;
     Library.Track t = current();
+    if (now && fullLyrics && t != null && !t.id.equals(shownId)) { render(); return; }
     String title = t == null ? "음악을 선택하세요" : t.title, artist = t == null ? "Cool Player" : t.artist;
     boolean playing = player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED;
     if (mini != null) {
@@ -2296,10 +2336,11 @@ public class MainActivity extends Activity {
         .setTitle("가사")
         .setItems(
             new String[] {
-              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기", "가사 글자 크기", "가사 타이밍 조절"
+              "자동으로 가져와 저장", "곡명·가수 직접 검색", "LRC / TXT 파일 불러오기", "가사 직접 편집", "가사 파일 내보내기", "가사 글자 크기", "가사 타이밍 조절", "전체 화면 가사"
             },
             (d, w) -> {
-              if (w == 0) autoLyrics(t);
+              if (w == 7) { fullLyrics = true; now = true; render(); }
+              else if (w == 0) autoLyrics(t);
               else if (w == 1) searchLyrics(t);
               else if (w == 2) {
                 lyricTrackId = t.id;

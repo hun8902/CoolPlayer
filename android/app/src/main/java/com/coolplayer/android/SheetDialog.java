@@ -128,7 +128,9 @@ final class SheetDialog extends Dialog {
         ((android.view.ViewGroup) spec.view.getParent()).removeView(spec.view);
       style(spec.view);
       if (spec.flexible) surface.addView(spec.view, new LinearLayout.LayoutParams(-1, 0, 1));
-      else content.addView(spec.view, 0);
+      else content.addView(spec.view, 0, new LinearLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          spec.view instanceof EditText ? a.dp(56) : ViewGroup.LayoutParams.WRAP_CONTENT));
     }
     LinearLayout buttons = a.column();
     for (Action action : spec.actions) {

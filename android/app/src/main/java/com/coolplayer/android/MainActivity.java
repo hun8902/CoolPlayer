@@ -128,6 +128,8 @@ public class MainActivity extends Activity {
     if (b != null) {
       now = b.getBoolean("now");
       tab = b.getString("tab", "곡");
+      playlistFilter = b.getString("playlistFilter", "");
+      albumFilter = b.getString("albumFilter", "");
     }
     showPhoneLyrics = b != null && b.getBoolean("lyrics");
     colors();
@@ -209,6 +211,8 @@ public class MainActivity extends Activity {
     super.onSaveInstanceState(out);
     out.putBoolean("now", now);
     out.putString("tab", tab);
+    out.putString("playlistFilter", playlistFilter);
+    out.putString("albumFilter", albumFilter);
     out.putBoolean("lyrics", showPhoneLyrics);
   }
 
@@ -2036,6 +2040,8 @@ public class MainActivity extends Activity {
                 in.addCategory(Intent.CATEGORY_OPENABLE);
                 in.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
               }
+              getSharedPreferences("pending_import", 0).edit()
+                  .putString("playlist", playlistFilter).commit();
               startActivityForResult(in, w == 0 ? 10 : 11);
             })
         .show();
@@ -2075,7 +2081,9 @@ public class MainActivity extends Activity {
                       : Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (Exception ignored) {
         }
-      final String targetPlaylist = playlistFilter;
+      final String targetPlaylist = getSharedPreferences("pending_import", 0)
+          .getString("playlist", playlistFilter);
+      getSharedPreferences("pending_import", 0).edit().remove("playlist").apply();
       importing = true;
       toast("음악 정보를 가져오고 있습니다");
       io.execute(
@@ -2119,6 +2127,9 @@ public class MainActivity extends Activity {
                       }
                     }
                     library.save();
+                    if (!targetPlaylist.isEmpty()) {
+                      playlistFilter = targetPlaylist; albumFilter = ""; query = ""; tab = "목록";
+                    }
                     render();
                     toast(added + "곡 추가" + (errors > 0 ? " · " + errors + "개 파일을 읽지 못했습니다" : ""));
                   }

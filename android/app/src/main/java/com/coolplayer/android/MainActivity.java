@@ -237,6 +237,7 @@ public class MainActivity extends Activity {
 
   @Override
   protected void onDestroy() {
+    if (playbackStateToast != null) playbackStateToast.cancel();
     if (screenTransition != null) screenTransition.cancel();
     if (backdrop != null) backdrop.stop();
     destroyed = true;
@@ -398,9 +399,20 @@ public class MainActivity extends Activity {
         });
   }
 
+  Toast playbackStateToast;
+  void announcePlaybackState(String message) {
+    if (playbackStateToast != null) playbackStateToast.cancel();
+    playbackStateToast = Toast.makeText(this, tr(message), Toast.LENGTH_SHORT);
+    playbackStateToast.show();
+  }
+
   final class IconControl extends TextView {
     String symbol = "play";
     int tint = ink, extent = 24;
+    String previousSymbol;
+    int previousTint, previousExtent;
+    float glyphProgress = 1f;
+    android.animation.ValueAnimator glyphAnimator;
 
     IconControl() {
       super(MainActivity.this);
@@ -413,10 +425,26 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDraw(Canvas canvas) {
-      PlayerGlyph g = new PlayerGlyph(symbol, tint, dp(extent));
+      if (previousSymbol != null && glyphProgress < 1f)
+        drawGlyph(canvas, previousSymbol, previousTint, previousExtent, 1f - glyphProgress, 1f - .12f * glyphProgress);
+      drawGlyph(canvas, symbol, tint, extent, glyphProgress, .88f + .12f * glyphProgress);
+    }
+
+    void drawGlyph(Canvas canvas, String name, int color, int extent, float alpha, float scale) {
+      int save = canvas.save();
+      canvas.scale(scale, scale, getWidth() / 2f, getHeight() / 2f);
+      PlayerGlyph glyph = new PlayerGlyph(name, color, dp(extent));
       int size = dp(extent), x = (getWidth() - size) / 2, y = (getHeight() - size) / 2;
-      g.setBounds(x, y, x + size, y + size);
-      g.draw(canvas);
+      glyph.setBounds(x, y, x + size, y + size);
+      glyph.setAlpha(Math.round(alpha * 255));
+      glyph.draw(canvas);
+      canvas.restoreToCount(save);
+    }
+
+    @Override protected void onDetachedFromWindow() {
+      if (glyphAnimator != null) glyphAnimator.cancel();
+      previousSymbol = null; glyphProgress = 1f;
+      super.onDetachedFromWindow();
     }
   }
 
@@ -424,9 +452,29 @@ public class MainActivity extends Activity {
     if (view instanceof IconControl) {
       IconControl icon = (IconControl) view;
       if (!icon.symbol.equals(name) || icon.tint != color || icon.extent != size) {
+        boolean transition = !icon.symbol.equals(name) && icon.isLaidOut()
+            && android.animation.ValueAnimator.areAnimatorsEnabled();
+        if (transition) {
+          if (icon.glyphAnimator != null) icon.glyphAnimator.cancel();
+          icon.previousSymbol = icon.symbol;
+          icon.previousTint = icon.tint;
+          icon.previousExtent = icon.extent;
+          icon.glyphProgress = 0f;
+        }
         icon.symbol = name;
         icon.tint = color;
         icon.extent = size;
+        if (transition) {
+          icon.glyphAnimator = android.animation.ValueAnimator.ofFloat(0f, 1f);
+          icon.glyphAnimator.setDuration(180);
+          icon.glyphAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+          icon.glyphAnimator.addUpdateListener(animation -> {
+            icon.glyphProgress = (float) animation.getAnimatedValue();
+            if (icon.glyphProgress >= 1f) icon.previousSymbol = null;
+            icon.invalidate();
+          });
+          icon.glyphAnimator.start();
+        }
         icon.postInvalidateOnAnimation();
       }
     }
@@ -1653,6 +1701,7 @@ public class MainActivity extends Activity {
               if (player != null) {
                 player.setShuffleModeEnabled(!player.getShuffleModeEnabled());
                 updatePlayback();
+                announcePlaybackState(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
 
               }
             });
@@ -1684,6 +1733,8 @@ public class MainActivity extends Activity {
               if (player != null) {
                 player.setRepeatMode(player.getRepeatMode() == Player.REPEAT_MODE_OFF ? Player.REPEAT_MODE_ALL : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? Player.REPEAT_MODE_ONE : Player.REPEAT_MODE_OFF);
                 updatePlayback();
+                announcePlaybackState(player.getRepeatMode() == Player.REPEAT_MODE_ONE
+                    ? "한 곡 반복" : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? "전체 반복" : "반복 꺼짐");
               }
             });
     controls.addView(repeatButton, new LinearLayout.LayoutParams(0, dp(56), 1));
@@ -1818,14 +1869,14 @@ public class MainActivity extends Activity {
     if (t != null && !t.id.equals(shownId)) loadLyrics(t);
     setIcon(playButton, playing ? "pause" : "play", bg, 30);
     setIcon(shuffleButton, player.getShuffleModeEnabled() ? "shuffle_on" : "shuffle", player.getShuffleModeEnabled() ? ink : muted, 26);
-    shuffleButton.setAlpha(player.getShuffleModeEnabled() ? 1f : .48f);
+    shuffleButton.setAlpha(1f);
     shuffleButton.setSelected(player.getShuffleModeEnabled());
     setIcon(
         repeatButton,
         player.getRepeatMode() == Player.REPEAT_MODE_ONE ? "repeat_one" : player.getRepeatMode() == Player.REPEAT_MODE_ALL ? "repeat_all" : "repeat",
         player.getRepeatMode() == Player.REPEAT_MODE_OFF ? muted : ink,
         26);
-    repeatButton.setAlpha(player.getRepeatMode() == Player.REPEAT_MODE_OFF ? .48f : 1f);
+    repeatButton.setAlpha(1f);
     shuffleButton.setContentDescription(player.getShuffleModeEnabled() ? "셔플 켜짐" : "셔플 꺼짐");
     repeatButton.setContentDescription(
         player.getRepeatMode() == Player.REPEAT_MODE_ONE
@@ -3009,7 +3060,13 @@ public class MainActivity extends Activity {
               list.post(() -> SpotlightGuide.show(this, list.getChildAt(index - list.getFirstVisiblePosition()),
                   "3 / 4 · Morning Blue\nMorning Blue를 열고 가사 화면으로 이동하세요.", "Morning Blue 열기", () -> {
                 if (player == null) { toast("재생 준비 후 튜토리얼을 다시 열어주세요."); return; }
-                play(visible, index); now = true; showPhoneLyrics = true; render();
+                // Tutorial selection must never inherit a playing queue's playWhenReady state.
+                player.setPlayWhenReady(false);
+                ArrayList<MediaItem> tutorialItems = new ArrayList<>();
+                for (Library.Track item : new ArrayList<>(visible)) tutorialItems.add(item.media());
+                player.setMediaItems(tutorialItems, index, 0);
+                player.prepare();
+                now = true; fullLyrics = false; showPhoneLyrics = true; render();
                 root.post(() -> {
                   View fetch = root.findViewWithTag("guide-fetch-lyrics");
                   if (fetch == null) { toast("이미 가사가 저장되어 있습니다."); return; }

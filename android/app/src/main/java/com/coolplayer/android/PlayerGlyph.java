@@ -119,34 +119,53 @@ final class PlayerGlyph extends Drawable {
         break;
       case "shuffle_on":
       case "shuffle":
-        if (name.equals("shuffle_on")) {
-          paint.setStyle(Paint.Style.FILL);
-          canvas.drawCircle(12, 22, 2f, paint);
-          paint.setStyle(Paint.Style.STROKE);
-          paint.setStrokeWidth(2.5f);
-        }
-        line(canvas, 3, 6, 6, 6, 18, 18, 21, 18);
-        line(canvas, 17, 14, 21, 18, 17, 22);
-        line(canvas, 3, 18, 6, 18, 10, 14);
-        line(canvas, 14, 10, 18, 6, 21, 6);
-        line(canvas, 17, 2, 21, 6, 17, 10);
+        paint.setStrokeWidth(1.7f);
+        Path shuffleRoute = new Path();
+        shuffleRoute.moveTo(3.5f, 17);
+        shuffleRoute.lineTo(6, 17);
+        shuffleRoute.cubicTo(10, 17, 14, 6, 18, 6);
+        shuffleRoute.lineTo(20.5f, 6);
+        // The second route passes behind the first with a deliberate central gap.
+        shuffleRoute.moveTo(3.5f, 6);
+        shuffleRoute.lineTo(6, 6);
+        shuffleRoute.cubicTo(7.7f, 6, 8.9f, 7.8f, 10.2f, 9.7f);
+        shuffleRoute.moveTo(13.8f, 13.3f);
+        shuffleRoute.cubicTo(15.1f, 15.2f, 16.3f, 17, 18, 17);
+        shuffleRoute.lineTo(20.5f, 17);
+        canvas.drawPath(shuffleRoute, paint);
+        // Compact arrowheads stay separate from the crossing and viewport edge.
+        paint.setStyle(Paint.Style.FILL);
+        Path arrows = new Path();
+        arrows.moveTo(18, 3.5f); arrows.lineTo(21.5f, 6); arrows.lineTo(18, 8.5f); arrows.close();
+        arrows.moveTo(18, 14.5f); arrows.lineTo(21.5f, 17); arrows.lineTo(18, 19.5f); arrows.close();
+        canvas.drawPath(arrows, paint);
+        if (name.equals("shuffle_on")) canvas.drawCircle(12, 22, 1.1f, paint);
+        paint.setStyle(Paint.Style.STROKE);
         break;
       case "repeat_all":
       case "repeat_one":
       case "repeat":
-        if (!name.equals("repeat")) {
+        paint.setStrokeWidth(1.8f);
+        Path loop = new Path();
+        loop.moveTo(4, 10); loop.lineTo(4, 8); loop.quadTo(4, 6, 6, 6); loop.lineTo(20, 6);
+        loop.moveTo(20, 14); loop.lineTo(20, 16); loop.quadTo(20, 18, 18, 18); loop.lineTo(4, 18);
+        canvas.drawPath(loop, paint);
+        if (name.equals("repeat")) {
+          line(canvas, 17, 3, 20, 6, 17, 9);
+          line(canvas, 7, 15, 4, 18, 7, 21);
+        } else {
           paint.setStyle(Paint.Style.FILL);
-          canvas.drawCircle(12, 22, 2f, paint);
+          line(canvas, 17, 3, 21, 6, 17, 9, 17, 3);
+          line(canvas, 7, 15, 3, 18, 7, 21, 7, 15);
+          canvas.drawCircle(12, 22, 1.1f, paint);
+          if (name.equals("repeat_one")) {
+            paint.setTextSize(8);
+            paint.setTypeface(Typeface.create("sans-serif", Typeface.BOLD));
+            paint.setTextAlign(Paint.Align.CENTER);
+            Paint.FontMetrics metrics = paint.getFontMetrics();
+            canvas.drawText("1", 12, 12 - (metrics.ascent + metrics.descent) / 2, paint);
+          }
           paint.setStyle(Paint.Style.STROKE);
-          paint.setStrokeWidth(2.5f);
-        }
-        line(canvas, 4, 10, 4, 6, 20, 6, 17, 3);
-        line(canvas, 20, 14, 20, 18, 4, 18, 7, 21);
-        if (name.equals("repeat_one")) {
-          paint.setStyle(Paint.Style.FILL);
-          paint.setTextSize(8);
-          paint.setTextAlign(Paint.Align.CENTER);
-          canvas.drawText("1", 12, 15, paint);
         }
         break;
       case "heart_filled":

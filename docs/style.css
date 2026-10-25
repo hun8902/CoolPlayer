@@ -52,3 +52,151 @@ main>section[class],main>.hero-scroll,main>.product-facts{padding-left:max(5%,ca
 .journey-heading{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}
 main>footer{padding-left:5%;padding-right:5%}
 @media(max-width:700px){.journey-story{grid-template-columns:minmax(0,1fr)}}
+
+/* Keep adjacent section surfaces continuous and use one spacing scale. */
+.lyrics-journey,.music-comparison,.wide-listening,.mac-workspace,.platform-downloads{margin-top:0;margin-bottom:0;padding-top:48px;padding-bottom:48px;border-radius:0}
+.journey-chapters article{min-height:54svh;padding-top:32px;padding-bottom:32px}
+.journey-chapters article:last-child{padding-bottom:24px}
+@media(max-width:700px){
+ .lyrics-journey,.music-comparison,.wide-listening,.mac-workspace,.platform-downloads{padding-top:32px;padding-bottom:32px}
+ .journey-chapters article{min-height:44svh;padding-top:24px;padding-bottom:24px}
+ .journey-chapters article:last-child{padding-bottom:16px}
+}
+
+/* Full-screen lyrics on the two unfolded display orientations. */
+.fullscreen-lyrics{background:#e9edf3;padding-top:48px;padding-bottom:48px}
+.fullscreen-heading{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:end;margin-bottom:32px}
+.fullscreen-heading>div>p:not(.eyebrow){font-size:15px;color:var(--muted)}
+.fullscreen-heading>div>p+p{margin-top:16px}
+.fullscreen-displays{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:36px;align-items:center}
+.fullscreen-displays figure{min-width:0}
+.fold-lyrics-frame{position:relative;padding:5px;border:2px solid #858990;border-radius:24px;background:#202226;box-shadow:0 12px 28px #17213220,inset 0 0 0 1px #c2c5ca}
+.fold-lyrics-frame img{width:100%;height:auto;border-radius:17px}
+.fullscreen-displays figcaption{text-align:center;font-size:12px;color:var(--muted);margin-top:14px}
+@media(max-width:700px){
+ .fullscreen-lyrics{padding-top:32px;padding-bottom:32px}
+ .fullscreen-heading{grid-template-columns:1fr;gap:18px;margin-bottom:24px}
+ .fullscreen-heading>div>p:not(.eyebrow){font-size:13px}
+ .fullscreen-displays{grid-template-columns:1fr;gap:26px}
+ .fullscreen-portrait{width:76%;justify-self:center}
+ .fold-lyrics-frame{padding:3px;border-radius:17px}
+ .fold-lyrics-frame img{border-radius:12px}
+}
+
+/* Give the lyrics showcase a shared stage and a quieter editorial hierarchy. */
+.fullscreen-lyrics{background:#eef0f5;padding-top:64px;padding-bottom:56px}
+.fullscreen-heading{grid-template-columns:1.15fr 1fr;gap:48px;margin-bottom:38px}
+.fullscreen-heading .eyebrow{color:#536fa1;margin-bottom:14px}
+.fullscreen-heading h2{font-size:clamp(28px,3.4vw,46px);line-height:1.3}
+.fullscreen-heading>div:last-child{padding-bottom:4px}
+.fullscreen-heading>div:last-child>p:last-child{font-size:12px;color:#53658a;margin-top:18px}
+.fullscreen-displays{position:relative;isolation:isolate;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:center;padding:36px clamp(20px,4vw,52px) 24px;background:radial-gradient(ellipse at 35% 30%,#ffffffd9,transparent 70%),#e3e7ef;border:1px solid #d9dfe9;border-radius:28px}
+.fullscreen-portrait{width:92%;justify-self:center}
+.fold-lyrics-frame{padding:4px;border-color:#777e88;border-radius:22px;background:#202329;box-shadow:0 18px 34px -16px #19223770,inset 0 0 0 1px #bec3cb}
+.fold-lyrics-frame img{border-radius:16px}
+.fullscreen-displays figcaption{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:18px;font-size:12px;letter-spacing:.01em;color:#526079}
+.fullscreen-displays figcaption span{font-size:10px;color:#8490a3;font-variant-numeric:tabular-nums}
+@media(max-width:700px){
+ .fullscreen-lyrics{padding-top:36px;padding-bottom:36px}
+ .fullscreen-heading{grid-template-columns:1fr;gap:18px;margin-bottom:24px}
+ .fullscreen-heading>div:last-child>p:last-child{margin-top:12px}
+ .fullscreen-displays{grid-template-columns:1fr;gap:28px;padding:24px 16px;border-radius:20px}
+ .fullscreen-portrait{width:76%}
+ .fold-lyrics-frame{padding:3px;border-radius:16px}
+ .fold-lyrics-frame img{border-radius:11px}
+ .fullscreen-displays figcaption{margin-top:12px;font-size:11px}
+}
+
+/* A real two-panel hinge: the outer display lives on the reverse face. */
+.scroll-device{width:min(100%,calc(min(54svh,460px) * 1.44));height:auto;aspect-ratio:2448/1701;max-width:100%;border:0;border-radius:0;background:transparent;overflow:visible;box-shadow:none;transform-style:preserve-3d;transform:perspective(1600px) translateX(calc((1 - var(--unfold)) * 25%)) rotateY(calc((1 - var(--unfold)) * -8deg));will-change:transform}
+.hinge-half{position:absolute;top:0;width:50%;height:100%;transform-style:preserve-3d}
+.hinge-left{left:0}
+.hinge-right{left:50%;transform-origin:left center;transform:rotateY(calc((1 - var(--unfold)) * -180deg));will-change:transform}
+.hinge-face{position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:#202329;border:5px solid #292d34;box-shadow:0 16px 28px #17213218}
+.hinge-left .hinge-inside{border-right-width:0;border-radius:20px 0 0 20px}
+.hinge-right .hinge-inside{border-left-width:0;border-radius:0 20px 20px 0}
+.scroll-device .hinge-inside img{position:absolute;top:0;width:200%;max-width:none;height:100%;object-fit:fill}
+.hinge-left .hinge-inside img{left:0}
+.hinge-right .hinge-inside img{left:-100%}
+.hinge-cover{transform:rotateY(180deg) translateZ(1px);border-radius:20px}
+.scroll-device .hinge-cover img{position:static;width:100%;height:100%;object-fit:cover}
+.scroll-device .device-crease{left:50%;width:2px;transform:translateZ(2px);pointer-events:none;background:linear-gradient(90deg,#0002,#fff2,#0002);box-shadow:0 0 10px #0002;opacity:var(--unfold)}
+@media(max-width:700px){.scroll-device{width:min(100%,calc(min(35svh,300px) * 1.44));height:auto}.hinge-face{border-width:3px}.hinge-left .hinge-inside{border-radius:13px 0 0 13px}.hinge-right .hinge-inside{border-radius:0 13px 13px 0}.hinge-cover{border-radius:13px}}
+@media(prefers-reduced-motion:reduce){.scroll-device{transform:none;will-change:auto}.hinge-right{transform:none;will-change:auto}}
+
+/* Keep the unfolded display seamless across the hinge. */
+.scroll-device .device-crease{display:none}
+.hinge-inside{box-shadow:none}
+
+/* Hide the stationary inner panel behind the closed cover; never crop its image. */
+.hero-scroll.is-folded .hinge-left{visibility:hidden}
+.scroll-device .hinge-cover img{object-fit:contain;background:#f4f0f3}
+.hinge-cover{box-shadow:none}
+
+/* Clip each physical face independently so reverse-face corners cannot protrude. */
+.hinge-face{border:0;padding:5px;background:linear-gradient(125deg,#c9ced5 0%,#707780 18%,#d9dde3 48%,#606770 76%,#b5bdc7 100%);box-shadow:inset 0 0 0 1px #515861}
+.hinge-left .hinge-inside{border-radius:20px 0 0 20px;clip-path:inset(0 round 20px 0 0 20px);padding-right:0}
+.hinge-right .hinge-inside{border-radius:0 20px 20px 0;clip-path:inset(0 round 0 20px 20px 0);padding-left:0}
+.hinge-cover{border-radius:20px;clip-path:inset(0 round 20px);transform:rotateY(180deg) translateZ(0.5px)}
+.scroll-device .hinge-cover img{border:3px solid #16191e;border-radius:15px;background:#f4f0f3}
+.scroll-device .hinge-inside img{top:5px;height:calc(100% - 10px);border-top:3px solid #16191e;border-bottom:3px solid #16191e}
+.hinge-left .hinge-inside img{left:5px;border-left:3px solid #16191e;border-radius:15px 0 0 15px}
+.hinge-right .hinge-inside img{left:calc(-100% - 5px);border-right:3px solid #16191e;border-radius:0 15px 15px 0}
+@media(max-width:700px){.hinge-face{padding:4px}.scroll-device .hinge-inside img{top:4px;height:calc(100% - 8px)}.hinge-left .hinge-inside img{left:4px}.hinge-right .hinge-inside img{left:calc(-100% - 4px)}}
+
+/* The right panel stays fixed while the left panel opens from the hinge. */
+.scroll-device{transform:perspective(1600px) translateX(calc((1 - var(--unfold)) * -25%)) rotateY(calc((1 - var(--unfold)) * 8deg))}
+.hinge-right{transform:none;will-change:auto}
+.hinge-left{transform-origin:right center;transform:rotateY(calc((1 - var(--unfold)) * 180deg));will-change:transform}
+.hero-scroll.is-folded .hinge-left{visibility:visible}
+.hero-scroll.is-folded .hinge-right{visibility:hidden}
+@media(prefers-reduced-motion:reduce){.scroll-device,.hinge-left{transform:none;will-change:auto}}
+
+/* Cull the inner frame explicitly while the cover faces the viewer. */
+.hero-scroll.cover-facing .hinge-left .hinge-inside{visibility:hidden}
+.hero-scroll:not(.cover-facing) .hinge-cover{visibility:hidden}
+
+/* Suppress reverse geometry from the scroll value, including before JS classes update. */
+.hinge-left .hinge-inside{opacity:clamp(0,calc((var(--unfold) - .5) * 1000),1)}
+.hinge-cover{opacity:clamp(0,calc((.5 - var(--unfold)) * 1000),1)}
+.hinge-right{opacity:clamp(0,calc(var(--unfold) * 200 - 1),1)}
+
+/* Round the fixed panel's exposed hinge corners until the display opens. */
+.hinge-right .hinge-inside{--hinge-radius:clamp(0px,calc(20px - var(--unfold) * 40px),20px);border-radius:var(--hinge-radius) 20px 20px var(--hinge-radius);clip-path:inset(0 round var(--hinge-radius) 20px 20px var(--hinge-radius))}
+
+/* Match the comparison devices to the hero's metal frame and inset bezel. */
+.comparison-device,.comparison-view.is-wide .comparison-device{border:2px solid #777e88;padding:4px;background:linear-gradient(125deg,#c9ced5,#707780 18%,#d9dde3 48%,#606770 76%,#b5bdc7);border-radius:20px;box-shadow:0 12px 24px -16px #19223770,inset 0 0 0 1px #c2c5ca;overflow:hidden}
+.comparison-device img,.comparison-view.is-wide .comparison-device img{inset:4px;width:calc(100% - 8px);height:calc(100% - 8px);border:3px solid #16191e;border-radius:14px;object-fit:contain;background:#16191e}
+@media(max-width:700px){.comparison-device,.comparison-view.is-wide .comparison-device{padding:2px;border-width:1px;border-radius:12px}.comparison-device img,.comparison-view.is-wide .comparison-device img{inset:2px;width:calc(100% - 4px);height:calc(100% - 4px);border-width:2px;border-radius:9px}}
+
+/* Reuse the hero hinge geometry for both comparison products. */
+.comparison-fold{position:relative;width:100%;aspect-ratio:2448/1701;perspective:1600px;--unfold:0}
+.comparison-fold .scroll-device{width:100%;height:100%;aspect-ratio:2448/1701}
+.comparison-fold.is-folded .hinge-right{visibility:hidden}
+.comparison-fold.cover-facing .hinge-left .hinge-inside{visibility:hidden}
+.comparison-fold:not(.cover-facing) .hinge-cover{visibility:hidden}
+
+/* Both halves sample the same full display, including the outer bezel inset. */
+.scroll-device .hinge-inside img{width:calc(200% - 10px);max-width:none}
+.hinge-left .hinge-inside img{left:5px}
+.hinge-right .hinge-inside img{left:calc(-100% + 5px)}
+@media(max-width:700px){.scroll-device .hinge-inside img{width:calc(200% - 8px)}.hinge-left .hinge-inside img{left:4px}.hinge-right .hinge-inside img{left:calc(-100% + 4px)}}
+
+/* Match the cover screenshot ratio, then interpolate to the unfolded display. */
+.scroll-device{aspect-ratio:calc(1.340494 + var(--unfold) * .09866)}
+.comparison-fold{aspect-ratio:calc(1.340494 + var(--unfold) * .09866)}
+.comparison-fold .scroll-device{aspect-ratio:calc(1.340494 + var(--unfold) * .09866)}
+
+.scroll-device,.comparison-fold,.comparison-fold .scroll-device{aspect-ratio:calc(var(--closed-ratio,1.340494) + var(--unfold) * (1.439154 - var(--closed-ratio,1.340494)))}
+
+/* A reversible orientation change driven by the section's scroll distance. */
+.lyrics-rotation-track{height:170svh;position:relative;--turn:0}
+.lyrics-rotation-stage{position:sticky;top:74px;height:calc(100svh - 90px);display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden;border-radius:26px;background:radial-gradient(ellipse at center,#fff9,#e3e7ef);border:1px solid #d9dfe9}
+.lyrics-rotating-device{position:relative;width:min(82%,720px,70svh);aspect-ratio:calc(1.439154 - var(--turn) * .19673);flex-shrink:0;padding:5px;border:2px solid #777e88;border-radius:24px;background:linear-gradient(125deg,#c9ced5,#707780 18%,#d9dde3 48%,#606770 76%,#b5bdc7);box-shadow:0 18px 34px -16px #19223770;transform:rotate(calc(var(--turn) * 90deg));will-change:transform}
+.lyrics-rotating-screen{position:relative;width:100%;height:100%;overflow:hidden;border:3px solid #16191e;border-radius:17px;background:#16191e}
+.lyrics-rotating-screen img{position:absolute;max-width:none;object-fit:contain}
+.rotation-landscape{inset:0;width:100%;height:100%;opacity:clamp(0,calc(1 - var(--turn) * 2),1)}
+.rotation-portrait{left:50%;top:50%;width:calc(100% / (1.439154 - var(--turn) * .19673));height:calc(100% * (1.439154 - var(--turn) * .19673));transform:translate(-50%,-50%) rotate(-90deg);opacity:clamp(0,calc(var(--turn) * 2 - 1),1)}
+.rotation-caption{position:absolute;bottom:20px;left:16px;right:16px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:700px){.lyrics-rotation-track{height:150svh}.lyrics-rotation-stage{top:65px;height:calc(100svh - 80px);border-radius:18px}.lyrics-rotating-device{width:min(82%,60svh);padding:3px;border-radius:17px}.lyrics-rotating-screen{border-width:2px;border-radius:12px}}
+@media(prefers-reduced-motion:reduce){.lyrics-rotation-track{height:auto;--turn:0!important}.lyrics-rotation-stage{position:relative;top:0;height:auto;min-height:65svh}.lyrics-rotating-device{transform:none;will-change:auto}}

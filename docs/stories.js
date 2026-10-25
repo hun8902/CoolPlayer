@@ -14,6 +14,8 @@
      const distance = Math.max(1, rect.height - (height - top));
      const progress = reduced.matches ? 1 : clamp((top - rect.top) / distance);
      hero.style.setProperty('--unfold', progress.toFixed(4));
+     hero.classList.toggle('is-folded', progress < .005);
+     hero.classList.toggle('cover-facing', progress < .5);
    }
    if (section && shot) {
      const rect = shot.getBoundingClientRect();
@@ -36,42 +38,44 @@
  const root = document.querySelector('.comparison-view');
  if (!root) return;
  const buttons = [...root.querySelectorAll('[data-comparison]')];
- const images = [...root.querySelectorAll('.comparison-device img')];
  const views = {
-   phone: [['assets/samsung-phone.jpg','삼성 Music의 접힌 화면'],['assets/player-lyrics.jpg','Cool Player의 접힌 화면, 가사를 가져온 후']],
-   wide: [['assets/samsung-wide.jpg','삼성 Music의 펼친 화면'],['assets/player-wide.jpg','Cool Player의 펼친 화면, 앨범과 실시간 가사']]
+   phone: [['assets/samsung-phone.jpg','Samsung Music'],['assets/player-lyrics.jpg','Cool Player']],
+   wide: [['assets/samsung-wide.jpg','Samsung Music'],['assets/player-wide.jpg','Cool Player']]
  };
- // Prepare wide images without changing the selected view.
- views.wide.forEach(([src]) => { const image = new Image(); image.src = src; });
  const devices = [...root.querySelectorAll('.comparison-device')];
  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
- let selected = 'phone';
- function select(mode) {
-   const button = buttons.find(item => item.dataset.comparison === mode);
-   if (mode === selected) return;
-   const before = devices.map(device => device.getBoundingClientRect());
-   devices.forEach(device => device.getAnimations().forEach(animation => animation.cancel()));
-   images.forEach(image => image.getAnimations().forEach(animation => animation.cancel()));
-   selected = mode;
-   root.classList.toggle('is-wide', mode === 'wide');
-   buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-   images.forEach((image, index) => {
-     image.src = views[mode][index][0];
-     image.alt = views[mode][index][1];
-   });
-   if (reduced.matches) return;
-   devices.forEach((device, index) => {
-     const after = device.getBoundingClientRect();
-     const previous = before[index];
-     // Animate the frame dimensions; never stretch or rotate the screenshot.
-     device.animate([
-       {width: `${previous.width}px`, height: `${previous.height}px`},
-       {width: `${after.width}px`, height: `${after.height}px`}
-     ], {duration:720, easing:'cubic-bezier(.4,0,.2,1)'});
-     images[index].animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],
-       {duration:720,easing:'ease-in-out'});
+ devices.forEach((device,index) => {
+   device.className = 'comparison-fold';
+   device.innerHTML = `<div class="scroll-device"><div class="hinge-half hinge-left"><div class="hinge-face hinge-inside"><img src="${views.wide[index][0]}" alt="${views.wide[index][1]} 펼친 화면"></div><div class="hinge-face hinge-cover"><img src="${views.phone[index][0]}" alt="${views.phone[index][1]} 접힌 화면"></div></div><div class="hinge-half hinge-right"><div class="hinge-face hinge-inside"><img src="${views.wide[index][0]}" alt=""></div></div></div>`;
+ });
+ let selected = 'phone', progress = 0, animation = 0;
+ function paint(value) {
+   devices.forEach(device => {
+     device.style.setProperty('--unfold',value.toFixed(4));
+     device.classList.toggle('is-folded',value < .005);
+     device.classList.toggle('cover-facing',value < .5);
    });
  }
+ function select(mode) {
+   if(mode === selected) return;
+   selected = mode;
+   root.classList.toggle('is-wide', mode === 'wide');
+   buttons.forEach(item => item.setAttribute('aria-pressed',String(item.dataset.comparison === mode)));
+   cancelAnimationFrame(animation);
+   const start = progress, end = mode === 'wide' ? 1 : 0;
+   if(reduced.matches) { progress=end;paint(progress);return; }
+   let began;
+   function frame(time) {
+     if(began === undefined) began=time;
+     const t=Math.min(1,(time-began)/850);
+     const eased=t*t*(3-2*t);
+     progress=start+(end-start)*eased;
+     paint(progress);
+     if(t<1) animation=requestAnimationFrame(frame);
+   }
+   animation=requestAnimationFrame(frame);
+ }
+ paint(0);
  let scrollMode = null, pending = false;
  buttons.forEach(button => button.addEventListener('click', () => select(button.dataset.comparison)));
  function updateScroll() {
@@ -121,5 +125,49 @@
  addEventListener('resize', schedule, {passive:true});
  addEventListener('pageshow', schedule);
  addEventListener('pagehide', () => { cancelAnimationFrame(pending); pending = 0; });
+ update();
+})();
+
+// Derive the closed frame height from the image area inside its metal and bezel.
+(() => {
+ const devices=[...document.querySelectorAll('.scroll-device')];
+ const observer=new ResizeObserver(entries => {
+   for(const entry of entries) {
+     const device=entry.target;
+     const width=entry.contentRect.width;
+     const face=device.querySelector('.hinge-cover');
+     const image=face && face.querySelector('img');
+     if(!image || !width) continue;
+     const style=getComputedStyle(face), bezel=getComputedStyle(image);
+     const inset=parseFloat(style.paddingLeft)+parseFloat(bezel.borderLeftWidth);
+     const ratio=image.naturalWidth/image.naturalHeight;
+     if(!ratio) continue;
+     const closedHeight=(width/2-inset*2)/ratio+inset*2;
+     device.style.setProperty('--closed-ratio',String(width/closedHeight));
+     const wrapper=device.closest('.comparison-fold');
+     if(wrapper) wrapper.style.setProperty('--closed-ratio',String(width/closedHeight));
+   }
+ });
+ devices.forEach(device=>observer.observe(device));
+})();
+
+(() => {
+ const track=document.querySelector('.lyrics-rotation-track');
+ if(!track) return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+ let pending=0;
+ function update(){
+   pending=0;
+   const rect=track.getBoundingClientRect();
+   const stage=track.querySelector('.lyrics-rotation-stage');
+   const top=parseFloat(getComputedStyle(stage).top)||0;
+   const distance=Math.max(1,rect.height-stage.getBoundingClientRect().height);
+   const value=reduced.matches?0:Math.max(0,Math.min(1,(top-rect.top)/distance));
+   track.style.setProperty('--turn',String(value*value*(3-2*value)));
+ }
+ function schedule(){if(!pending)pending=requestAnimationFrame(update);}
+ addEventListener('scroll',schedule,{passive:true});
+ addEventListener('resize',schedule,{passive:true});
+ reduced.addEventListener('change',schedule);
  update();
 })();

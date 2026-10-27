@@ -200,3 +200,5 @@ main>footer{padding-left:5%;padding-right:5%}
 .rotation-caption{position:absolute;bottom:20px;left:16px;right:16px;text-align:center;color:var(--muted);font-size:12px}
 @media(max-width:700px){.lyrics-rotation-track{height:150svh}.lyrics-rotation-stage{top:65px;height:calc(100svh - 80px);border-radius:18px}.lyrics-rotating-device{width:min(82%,60svh);padding:3px;border-radius:17px}.lyrics-rotating-screen{border-width:2px;border-radius:12px}}
 @media(prefers-reduced-motion:reduce){.lyrics-rotation-track{height:auto;--turn:0!important}.lyrics-rotation-stage{position:relative;top:0;height:auto;min-height:65svh}.lyrics-rotating-device{transform:none;will-change:auto}}
+
+.search-guide{padding-top:48px;padding-bottom:48px;background:#f5f7fa}.search-guide>p:not(.eyebrow){max-width:760px;color:var(--muted);margin:20px 0}.search-guide details{border-top:1px solid var(--line);padding:18px 0}.search-guide summary{cursor:pointer;font-weight:600;line-height:1.6}.search-guide details p{max-width:800px;color:var(--muted);margin-top:12px;font-size:14px}@media(max-width:700px){.search-guide{padding-top:32px;padding-bottom:32px}}
